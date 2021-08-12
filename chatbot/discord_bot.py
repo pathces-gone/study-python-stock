@@ -2,8 +2,9 @@
 # https://realpython.com/how-to-make-a-discord-bot-python/
 import discord      #!pip3 install --user discord
 from finance_info import FinanceInfo
+from stocksignal_info import StocksignalInfo
 
-__MY_TOKEN__ = ''
+__MY_TOKEN__ = 'ODcyNDA2MDM4MjUzNTU5ODI5.YQpZcA.bbf8AhN_ujSouNhpuuav3ws50ZA'
 PAGE = 10
 
 class chatbot(discord.Client):
@@ -35,12 +36,35 @@ class chatbot(discord.Client):
       msg = 'Please wait about 10s ...'
       await channel.send(msg)
 
-      item = FinanceInfo(message.content[1:],page=PAGE)
-      item.get_stochastic()
-      with open(item.get_filename(), 'rb') as fp:
-        await channel.send(file=discord.File(fp, 'new_filename.png'))
-
+      try:
+        item = FinanceInfo(message.content[1:],page=PAGE)
+        item.get_stochastic()
+        fn = item.get_filename()
+        with open(fn, 'rb') as fp:
+          await channel.send(file=discord.File(fp, fn))
+      except:
+        msg = '종목을 찾을 수 없습니다.'
+        await channel.send(msg)
       return None
+
+    if message.content[0] == '#':
+      if message.content[1:] == '매수상위':
+        channel = message.channel
+        msg = '매수상위종목'
+        await channel.send(msg)
+        msg = 'Please wait about 10s ...'
+        await channel.send(msg)
+      
+        try:
+          item = StocksignalInfo()
+          item.run()
+          fn = item.get_filename()
+          with open(fn, 'rb') as fp:
+            await channel.send(file=discord.File(fp, fn))
+        except:
+          msg = 'URL: 404 Error'
+          await channel.send(msg)
+          return None
 
 if __name__ == '__main__':
   print('%d\n'%PAGE)

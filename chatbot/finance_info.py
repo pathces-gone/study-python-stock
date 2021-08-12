@@ -29,7 +29,7 @@ def get_html_table_symbol(url):
 def get_report_time():
   return datetime.datetime.now().strftime("%Y%m%d")
 
-def get_stochastic(df, n=15, m=5, t=3):
+def get_stochastic(df, n=5, m=3, t=3):
   df = pd.DataFrame(df)
   ndays_high = df.high.rolling(window=n, min_periods=1).max()
   ndays_low = df.low.rolling(window=n, min_periods=1).min()
