@@ -3,8 +3,11 @@
 import discord      #!pip3 install --user discord
 from finance_info import FinanceInfo
 from stocksignal_info import StocksignalInfo
+import os
 
-__MY_TOKEN__ = 'ODcyNDA2MDM4MjUzNTU5ODI5.YQpZcA.bbf8AhN_ujSouNhpuuav3ws50ZA'
+__MY_TOKEN__ = os.environ.get('DISCORD_KEY')
+assert __MY_TOKEN__ is not None, ""
+
 PAGE = 10
 
 class chatbot(discord.Client):
