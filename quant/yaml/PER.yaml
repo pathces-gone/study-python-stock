@@ -1,0 +1,12 @@
+# PER.yaml
+# (‘bs’:  재무상태표, ‘is’ : 손익계산서, ‘cis’ : 포괄손익계산서, ‘cf’ : 현금흐름표)
+comment: Price-to-Earnings Ratio (PER) - 12m
+type: is
+forward:
+  arg1: 
+  arg2:
+
+trailing:
+  arg1: 
+  arg2: ifrs-full_ProfitLossAttributableToOwnersOfParent
+

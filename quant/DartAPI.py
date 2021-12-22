@@ -42,8 +42,8 @@ class DartAPI(object):
 
     @classmethod
     def save(cls):
-        filename='fs_%s.xlsx'%(cls.name)
-        cls.fs.save(filename,cls.path)
+        file_='fs_%s.xlsx'%(cls.name)
+        cls.fs.save(file_,cls.path)
 
 
 class StockDataGroup(object):
@@ -67,5 +67,5 @@ class StockDataGroup(object):
     cls.semaphore = True
 
 if __name__ == '__main__':
-  corp_list = ['서울옥션', '삼성전자', '카카오게임즈', '해성디에스', '이녹스첨단소재']
+  corp_list = ['서울옥션']#, '삼성전자', '카카오게임즈', '해성디에스', '이녹스첨단소재']
   StockDataGroup().download(corp_list)
