@@ -7,6 +7,6 @@ forward:
   arg2:
 
 trailing:
-  arg1: 
-  arg2: ifrs-full_ProfitLossAttributableToOwnersOfParent
+  arg1: ifrs-full_BasicEarningsLossPerShare
+  arg2: 
 

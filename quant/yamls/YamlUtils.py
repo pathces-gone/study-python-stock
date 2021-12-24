@@ -2,7 +2,7 @@ import yaml
 import os
 
 class YamlUtils:
-  yaml_file_path = os.path.join(os.path.dirname(__file__), 'yaml')
+  yaml_file_path = os.path.join(os.path.dirname(__file__))
 
   @staticmethod
   def get(index:str):
@@ -11,4 +11,5 @@ class YamlUtils:
     return conf
 
 if __name__ == '__main__':
-  YamlUtils.get('per')
+  c = YamlUtils.get('per')
+  print(c)

@@ -6,10 +6,11 @@ import pandas as pd
 import os
 
 from IPython.display import display, HTML
-from YamlUtils import *
 
+from yamls.YamlUtils import *
+from StockPrice import *
 
-class QuantIndex:
+class QuantIndexRun:
   def __init__(self, comment:str, f:types.LambdaType, *params):
     self.comment= comment
     _params = params[0]
@@ -23,25 +24,23 @@ class QuantIndex:
     else:
       ret = 0
     self.ret = ret
+
   def get_score(self):
     return self.ret 
+
   def whoami(self):
     print(self.comment)
-
 
 class TableUtils:
   @staticmethod
   def get_row(df:DataFrame, key:int)->DataFrame:
     col = df.columns
     ret = df.loc[key,:].to_frame().T
-    print(ret)
     return ret
-
   @staticmethod
   def get_column(df:DataFrame)->DataFrame:
     col = df.columns
     return col
-
   @staticmethod
   def get_indices(df:DataFrame)->dict:
     from itertools import chain
@@ -53,59 +52,94 @@ class TableUtils:
     for k, v in chain(indices_eng.items(), indices_kor.items()):
         indices[k].append(v)
     return indices
-
   @staticmethod
   def get_key(indices:dict, index:str)->int:
     for key, value in indices.items():
         if index == value[0] or index == value[1]:
             return key
-
   @staticmethod
   def display_dataframe(df:DataFrame):
     display(HTML(df.to_html())) # Ipynb viewer
 
-class QuantIndexTable:
-  contents = {"per":0, "pbr":0, "pcr":0, "psr":0, "gp/a":0, "roa":0, "ev":0, "ebit":0}
-  keys = contents.keys()
+class QuantIndex(object):
+  def __init__(self, statements:DataFrame, item_name:str):
+    self.contents = {"per":0, "pbr":0, "pcr":0, "psr":0, "gp/a":0, "roa":0, "ev":0, "ebit":0}
+    self.keys = self.contents.keys()
+
+    self.statements=statements
+    self.item_name = item_name
+    self.share_price_table = (StockPrice(item_name=item_name, page=2).get_price(live=True))
+    self.share_price_table.set_index(self.share_price_table.columns[0], inplace=True)
 
   @staticmethod
-  def make_table(df: DataFrame, index:str)->DataFrame:
+  def make_table(statements: DataFrame, index:str)->DataFrame:
     """ Return "index_table"
-    
     """
-    indices = TableUtils.get_indices(df)
-    #column = TableUtils.get_column(df)
+    indices = TableUtils.get_indices(statements)
     key = TableUtils.get_key(indices=indices, index=index)
-    index_table = TableUtils.get_row(df, key=key)
+    index_table = TableUtils.get_row(statements, key=key)
     
-    if 0:
-      TableUtils.display_dataframe(df)  
-    else:
-      TableUtils.display_dataframe(index_table)
+    if 1:
+      TableUtils.display_dataframe(statements)
+      #TableUtils.display_dataframe(index_table)
     return index_table
 
-  @staticmethod
-  def get_per(df:DataFrame):
+
+  """ Templete
+  def get_(self):
+    conf = YamlUtils.get('')
+    comment = conf['comment']
+    index = conf['']['']
+    index_table = QuantIndex.make_table(self.statements, index)
+
+    def target_date():
+      return '2021-12-23'
+
+    def contents(target_date):
+      return []
+
+    ret = QuantIndexRun(comment, lambda x,y: np.abs(x/y), contents(target_date()))
+    return ret
+  """
+
+
+  def get_per(self):
+    """ Return "QuantIndexRun"
+    """
     conf = YamlUtils.get('PER')
     comment = conf['comment']
-    index = conf['trailing']['arg2']
-    index_table = QuantIndexTable.make_table(df, index)
+    index = conf['trailing']['arg1']
+    index_table = QuantIndex.make_table(self.statements, index)
 
-    eps = index_table['20200101-20201231'].to_list()[0]
-    price = 79200
-    return QuantIndex(comment, lambda x,y: np.abs(x/y), [eps, price])
+    def target_date():
+      return '2021-12-23'
 
+    def contents(target_date):
+      eps = int(index_table['20200101-20201231'].to_list()[0])
+      share_price = self.share_price_table.loc[target_date,:].to_frame().T
+      share_price = int(share_price['Close'])
+      return [share_price,eps]
+
+    ret = QuantIndexRun(comment, lambda x,y: np.abs(x/y), contents(target_date()))
+    return ret
 
 
 if __name__ == '__main__':
   if 0:
     mmd = QuantIndex("mmd@min/max-1", lambda x,y: np.abs(x/y-1), [277.37,1145.66])
     print(mmd.get_score())
-  if 1:
-    path = os.path.join(os.path.dirname(__file__),'fsdata','fs_삼성전자.xlsx')
 
-    df = pd.read_excel(path, sheet_name='Data_is')
-    #df = pd.read_excel(path, sheet_name='Data_cf')
-    #df = pd.read_excel(path, sheet_name='Data_bs')
-    per = QuantIndexTable().get_per(df)
-    #print(per.get_score())
+  if 1:
+    item_name = '삼성전자'
+    path = os.path.join(os.path.dirname(__file__),'fsdata','fs_%s.xlsx'%item_name)
+    statements = pd.read_excel(path, sheet_name='Data_is')
+    #statements = pd.read_excel(path, sheet_name='Data_cf')
+    #statements = pd.read_excel(path, sheet_name='Data_bs')
+
+    if 1:
+      per = QuantIndex(statements=statements, item_name='삼성전자').get_per()
+      per = per.get_score()
+      per = round(per,2)
+      print(per)
+    else:
+      QuantIndex.make_table(statements, 'ifrs-full_ProfitLossAttributableToOwnersOfParent')
