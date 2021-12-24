@@ -94,10 +94,10 @@ class StockPrice:
     assert df.empty == False, "the requested dataframe is empty."
 
     # 3. Rename columns
-    df = df.rename(columns= {'날짜': 'date', '종가': 'close', '전일비': 'diff', '시가': 'open', '고가': 'high', '저가': 'low', '거래량': 'volume'}) 
-    df[['close', 'diff', 'open', 'high', 'low', 'volume']] = df[['close', 'diff', 'open', 'high', 'low', 'volume']].astype(int) 
-    df['date'] = pd.to_datetime(df['date']) 
-    df = df.sort_values(by=['date'], ascending=True)
+    df = df.rename(columns= {'날짜': 'Date', '종가': 'Close', '전일비': 'Diff', '시가': 'Open', '고가': 'High', '저가': 'Low', '거래량': 'Volume'}) 
+    df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']] = df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']].astype(int) 
+    df['Date'] = pd.to_datetime(df['Date']) 
+    df = df.sort_values(by=['Date'], ascending=True)
     self.df = df
     return df
 

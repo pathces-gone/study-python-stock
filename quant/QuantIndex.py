@@ -33,7 +33,8 @@ class TableUtils:
   @staticmethod
   def get_row(df:DataFrame, key:int)->DataFrame:
     col = df.columns
-    ret = df.loc[df[col[0]] == key,:]
+    ret = df.loc[key,:].to_frame().T
+    print(ret)
     return ret
 
   @staticmethod
@@ -46,8 +47,8 @@ class TableUtils:
     from itertools import chain
     from collections import defaultdict
     col = df.columns
-    indices_eng = df[col[1]].to_dict()
-    indices_kor = df[col[2]].to_dict()
+    indices_eng = df[col[0]].to_dict()
+    indices_kor = df[col[1]].to_dict()
     indices = defaultdict(list)
     for k, v in chain(indices_eng.items(), indices_kor.items()):
         indices[k].append(v)
@@ -57,7 +58,7 @@ class TableUtils:
   def get_key(indices:dict, index:str)->int:
     for key, value in indices.items():
         if index == value[0] or index == value[1]:
-            return key - 2
+            return key
 
   @staticmethod
   def display_dataframe(df:DataFrame):
@@ -102,11 +103,9 @@ if __name__ == '__main__':
     print(mmd.get_score())
   if 1:
     path = os.path.join(os.path.dirname(__file__),'fsdata','fs_삼성전자.xlsx')
-    df = pd.read_excel(path, sheet_name='Data_bs')
+
+    df = pd.read_excel(path, sheet_name='Data_is')
     #df = pd.read_excel(path, sheet_name='Data_cf')
-    #df = pd.read_excel(path, sheet_name='Data_is')
-    TableUtils.display_dataframe(df)  
-
-
-    #per = QuantIndexTable().get_per(df)
+    #df = pd.read_excel(path, sheet_name='Data_bs')
+    per = QuantIndexTable().get_per(df)
     #print(per.get_score())
