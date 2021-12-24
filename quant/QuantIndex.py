@@ -6,9 +6,12 @@ import pandas as pd
 import os
 
 from IPython.display import display, HTML
-
 from yamls.YamlUtils import *
 from StockPrice import *
+
+import matplotlib.pyplot as plt
+from datetime import date
+
 
 class QuantIndexRun:
   def __init__(self, comment:str, f:types.LambdaType, *params):
@@ -25,9 +28,11 @@ class QuantIndexRun:
       ret = 0
     self.ret = ret
 
-  def get_score(self):
-    return self.ret 
+  @property
+  def score(self):
+    return round(self.ret,2)
 
+  @property
   def whoami(self):
     print(self.comment)
 
@@ -79,10 +84,20 @@ class QuantIndex(object):
     key = TableUtils.get_key(indices=indices, index=index)
     index_table = TableUtils.get_row(statements, key=key)
     
-    if 1:
+    if 0:
       TableUtils.display_dataframe(statements)
       #TableUtils.display_dataframe(index_table)
     return index_table
+
+
+  @staticmethod
+  def plot(qi_list):
+    # TODO
+    quaters = range(2017,2021,1)
+    score = [q.score for q in qi_list]  
+
+    print(score)
+    plt.plot(quaters,score)
 
 
   """ Templete
@@ -102,7 +117,7 @@ class QuantIndex(object):
     return ret
   """
 
-
+  @property
   def get_per(self):
     """ Return "QuantIndexRun"
     """
@@ -112,22 +127,31 @@ class QuantIndex(object):
     index_table = QuantIndex.make_table(self.statements, index)
 
     def target_date():
-      return '2021-12-23'
+      today =  date.today().isoformat()
+      return today
 
-    def contents(target_date):
-      eps = int(index_table['20200101-20201231'].to_list()[0])
-      share_price = self.share_price_table.loc[target_date,:].to_frame().T
+    def contents(target_date:types.FunctionType, quater:str):
+      _date = target_date()
+      eps = int(index_table[quater].to_list()[0])
+      share_price = self.share_price_table.loc[_date,:].to_frame().T
       share_price = int(share_price['Close'])
       return [share_price,eps]
 
-    ret = QuantIndexRun(comment, lambda x,y: np.abs(x/y), contents(target_date()))
+
+    #TODO
+    quaters = ['20170101-20171231','20180101-20181231','20190101-20191231','20200101-20201231']
+  
+    ret = []
+    for q in quaters:
+      per = QuantIndexRun(comment, lambda x,y: np.abs(x/y), contents(target_date, q))
+      ret.append(per)
     return ret
 
 
 if __name__ == '__main__':
   if 0:
     mmd = QuantIndex("mmd@min/max-1", lambda x,y: np.abs(x/y-1), [277.37,1145.66])
-    print(mmd.get_score())
+    print(mmd.score)
 
   if 1:
     item_name = '삼성전자'
@@ -137,9 +161,9 @@ if __name__ == '__main__':
     #statements = pd.read_excel(path, sheet_name='Data_bs')
 
     if 1:
-      per = QuantIndex(statements=statements, item_name='삼성전자').get_per()
-      per = per.get_score()
-      per = round(per,2)
-      print(per)
+      pers = QuantIndex(statements=statements, item_name='삼성전자').get_per
+
+      per_lst = [p.score for p in pers]
+      QuantIndex.plot(pers)
     else:
       QuantIndex.make_table(statements, 'ifrs-full_ProfitLossAttributableToOwnersOfParent')
