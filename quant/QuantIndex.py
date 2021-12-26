@@ -1,3 +1,4 @@
+from re import S
 import numpy as np
 import types
 
@@ -51,6 +52,7 @@ class TableUtils:
   def get_column(df:DataFrame)->DataFrame:
     col = df.columns
     return col
+
   @staticmethod
   def get_indices(df:DataFrame)->dict:
     from itertools import chain
@@ -62,11 +64,13 @@ class TableUtils:
     for k, v in chain(indices_eng.items(), indices_kor.items()):
         indices[k].append(v)
     return indices
+
   @staticmethod
   def get_key(indices:dict, index:str)->int:
     for key, value in indices.items():
         if index == value[0] or index == value[1]:
             return key
+
   @staticmethod
   def display_dataframe(df:DataFrame):
     display(HTML(df.to_html())) # Ipynb viewer
@@ -100,15 +104,14 @@ class QuantIndex(object):
     return index_table
 
 
-  @staticmethod
-  def plot(qi_list):
-    # TODO
-    quaters = range(2017,2021,1)
+  def plot_index(self, qi_list):
+    quarter = self.col
     score = [q.score for q in qi_list]  
 
-    print(score)
-    plt.plot(quaters,score)
-
+    fig = plt.figure(figsize=[20,10])
+    plt.plot(quarter,score)
+    #plt.scatter(quarter,score)
+    #plt.show()
 
   """ Templete
   def get_(self):
@@ -128,19 +131,17 @@ class QuantIndex(object):
   """
 
   @property
-  def get_per(self):
+  def PER(self):
     """ Return "QuantIndexRun"
     """
     conf = YamlUtils.get('PER')
     comment = conf['comment']
     index = conf['trailing']['arg1']
+
     index_table = QuantIndex.make_table(self.statements, index)
 
     def target_date():
-      if 1:
-        ret = self.share_price_table.index[-1]
-      else:
-        ret = date.today().isoformat()
+      ret = self.share_price_table.index[-1]
       return ret
 
     def contents(target_date:types.FunctionType, quater:str):
@@ -150,10 +151,86 @@ class QuantIndex(object):
       share_price = int(share_price['Close'])
       return [share_price,eps]
 
-    quaters = ['20170101-20171231','20180101-20181231','20190101-20191231','20200101-20201231']
+    def cols(statements:DataFrame)->list:
+      col = TableUtils.get_column(statements)[7:]
+      col = [c for c in col]
+      
+      ret = []
+      for c in col:
+        s_yy = c[0:4]
+        s_mm = c[4:6]
+        s_dd = c[6:8]
+        d_yy = c[9:13]
+        d_mm = c[13:15]
+        d_dd = c[15:17]
 
+        if int(s_yy) < 2015:
+          continue
+        if s_mm == '01' and d_mm == '03':
+          ret.append(c)
+        if s_mm == '01' and d_mm == '06':
+          ret.append(c)
+        if s_mm == '01' and d_mm == '09':
+          ret.append(c)
+        if s_mm == '01' and d_mm == '12':
+          ret.append(c)
+      return list(reversed(ret))
+
+    self.col = cols(index_table)
     ret = []
-    for q in quaters:
+    
+    for q in self.col:
+      per = QuantIndexRun(comment, lambda x,y: np.abs(x/y), contents(target_date, q))
+      ret.append(per)
+    return ret
+
+
+
+  @property
+  def EPS(self):
+    """ Return "QuantIndexRun"
+    """
+    conf = YamlUtils.get('PER')
+    comment = conf['comment']
+    index = conf['trailing']['arg1']
+
+    index_table = QuantIndex.make_table(self.statements, index)
+
+    def target_date():
+      ret = self.share_price_table.index[-1]
+      return ret
+
+    def contents(target_date:types.FunctionType, quater:str):
+      eps = int(index_table[quater].to_list()[0])
+      return [eps, 1]
+
+    def cols(statements:DataFrame)->list:
+      col = TableUtils.get_column(statements)[7:]
+      col = [c for c in col]
+      ret = []
+      for c in col:
+        s_yy = c[0:4]
+        s_mm = c[4:6]
+        s_dd = c[6:8]
+        d_yy = c[9:13]
+        d_mm = c[13:15]
+        d_dd = c[15:17]
+
+        if int(s_yy) < 2018:
+          continue
+        if s_mm == '01' and d_mm == '03':
+          ret.append(c)
+        if s_mm == '04' and d_mm == '06':
+          ret.append(c)
+        if s_mm == '07' and d_mm == '09':
+          ret.append(c)
+        if s_mm == '10' and d_mm == '12':
+          ret.append(c)
+      return list(reversed(ret))
+
+    self.col = cols(index_table)
+    ret = []
+    for q in self.col:
       per = QuantIndexRun(comment, lambda x,y: np.abs(x/y), contents(target_date, q))
       ret.append(per)
     return ret
@@ -164,15 +241,25 @@ if __name__ == '__main__':
     print(mmd.score)
 
   if 1:
-    item_name = '삼성전자'
+    item_name = '카카오게임즈'
     path = os.path.join(os.path.dirname(__file__),'fsdata','fs_%s.xlsx'%item_name)
-    statements = pd.read_excel(path, sheet_name='Data_is')
-    #statements = pd.read_excel(path, sheet_name='Data_cf')
-    #statements = pd.read_excel(path, sheet_name='Data_bs')
+    statements = pd.read_excel(path, sheet_name='Data_cis')
+    TableUtils.display_dataframe(statements)
 
-    if 1:
-      pers = QuantIndex(statements=statements, item_name='삼성전자').get_per
-      per_lst = [p.score for p in pers]
-      QuantIndex.plot(pers)
-    else:
-      QuantIndex.make_table(statements, 'ifrs-full_ProfitLossAttributableToOwnersOfParent')
+    statements = pd.read_excel(path, sheet_name='Data_cf')
+    TableUtils.display_dataframe(statements)
+
+    statements = pd.read_excel(path, sheet_name='Data_bs')
+    TableUtils.display_dataframe(statements)
+
+    if 0:
+      samsung_electronics = QuantIndex(statements=statements, item_name=item_name)
+
+      pers = samsung_electronics.PER
+      #samsung_electronics.plot_index(pers)
+      
+      eps = samsung_electronics.EPS
+      samsung_electronics.plot_index(eps)
+      
+    #else:
+      #QuantIndex.make_table(statements, 'ifrs-full_ProfitLossAttributableToOwnersOfParent')

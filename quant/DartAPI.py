@@ -12,7 +12,8 @@ class DartAPI(object):
             cls.api_key = os.environ.get('DART_KEY')
             assert cls.api_key is not  None, "Please set $DART_KEY env."
             cls.path    = os.path.join(os.path.dirname(__file__),'fsdata')
-            cls.bgn_de  = '20170101'
+            cls.bgn_de  = '20200101'
+            cls.end_de  = '20211231'
             cls.init_dart()
         return cls._instance
 
@@ -37,7 +38,17 @@ class DartAPI(object):
         print(cls.curr_item)
         if cls.curr_item is not None:
             cls.name = name
-        cls.fs = cls.curr_item.extract_fs(bgn_de=cls.bgn_de)
+        ''' fss.extract_fs()
+          bgn_de = 시작일
+          end_de = 끝
+          fs_tp = ‘bs’ 재무상태표, ‘is’ 손익계산서, ‘cis’ 포괄손익계산서, ‘cf’ 현금흐름표
+          report_tp = 'annual','quarter','half'
+        '''    
+        cls.fs = cls.curr_item.extract_fs(
+          bgn_de=cls.bgn_de,
+          end_de=cls.end_de,
+          report_tp=['quarter','annual','half']
+          )
         return cls.fs
 
     @classmethod
@@ -67,5 +78,5 @@ class StockDataGroup(object):
     cls.semaphore = True
 
 if __name__ == '__main__':
-  corp_list = ['서울옥션']#, '삼성전자', '카카오게임즈', '해성디에스', '이녹스첨단소재']
+  corp_list = ['카카오게임즈']#['서울옥션', '삼성전자', '카카오게임즈', '해성디에스', '이녹스첨단소재']
   StockDataGroup().download(corp_list)
