@@ -36,6 +36,11 @@ class QuantIndexRun:
   def whoami(self):
     print(self.comment)
 
+
+
+
+
+
 class TableUtils:
   @staticmethod
   def get_row(df:DataFrame, key:int)->DataFrame:
@@ -66,6 +71,11 @@ class TableUtils:
   def display_dataframe(df:DataFrame):
     display(HTML(df.to_html())) # Ipynb viewer
 
+
+
+
+
+
 class QuantIndex(object):
   def __init__(self, statements:DataFrame, item_name:str):
     self.contents = {"per":0, "pbr":0, "pcr":0, "psr":0, "gp/a":0, "roa":0, "ev":0, "ebit":0}
@@ -73,7 +83,7 @@ class QuantIndex(object):
 
     self.statements=statements
     self.item_name = item_name
-    self.share_price_table = (StockPrice(item_name=item_name, page=2).get_price(live=True))
+    self.share_price_table = (StockPrice(item_name=self.item_name, page=5).get_price(live=False))
     self.share_price_table.set_index(self.share_price_table.columns[0], inplace=True)
 
   @staticmethod
@@ -127,8 +137,11 @@ class QuantIndex(object):
     index_table = QuantIndex.make_table(self.statements, index)
 
     def target_date():
-      today =  date.today().isoformat()
-      return today
+      if 1:
+        ret = self.share_price_table.index[-1]
+      else:
+        ret = date.today().isoformat()
+      return ret
 
     def contents(target_date:types.FunctionType, quater:str):
       _date = target_date()
@@ -137,16 +150,13 @@ class QuantIndex(object):
       share_price = int(share_price['Close'])
       return [share_price,eps]
 
-
-    #TODO
     quaters = ['20170101-20171231','20180101-20181231','20190101-20191231','20200101-20201231']
-  
+
     ret = []
     for q in quaters:
       per = QuantIndexRun(comment, lambda x,y: np.abs(x/y), contents(target_date, q))
       ret.append(per)
     return ret
-
 
 if __name__ == '__main__':
   if 0:
@@ -162,7 +172,6 @@ if __name__ == '__main__':
 
     if 1:
       pers = QuantIndex(statements=statements, item_name='삼성전자').get_per
-
       per_lst = [p.score for p in pers]
       QuantIndex.plot(pers)
     else:
