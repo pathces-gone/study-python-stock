@@ -4,6 +4,8 @@ import os
 import types
 from StockPrice import *
 from QuantIndex import *
+from Manager import *
+from GetGroup import *
 
 
 class KHGSuper(object):
@@ -18,7 +20,8 @@ class KHGSuper(object):
     quant_indices = dict()
     for name in portfolio:
       temp = dict()
-      for key,value in zip(QuantIndex(name).contents.keys(), QuantIndex(name).contents.values()):
+      instance_quant_index = QuantIndex(name)
+      for key,value in zip(instance_quant_index.contents.keys(), instance_quant_index.contents.values()):
         if key == 'PER':
           temp['1/PER'] = [round(1/per*sf,3) for per in value]
         if key == 'PBR':
@@ -27,12 +30,48 @@ class KHGSuper(object):
           temp['1/EV/EBIT'] = [round(1/evebit*sf,3) for evebit in value]
 
       quant_indices[name] = temp
+
+    #for p in portfolio: 
+      #print(p,quant_indices[p])
     return quant_indices
 
+
+  def sort_by_priority(self)->list:
+    portfolio = self.portfolio
+    quant_indices = self.get_parameter()
+
+    a = [(p,quant_indices[p]['1/PER'][-1]) for p in portfolio]
+    b = [(p,quant_indices[p]['1/PBR'][-1]) for p in portfolio]
+    c = [(p,quant_indices[p]['1/EV/EBIT'][-1]) for p in portfolio]
+
+    a_sort = sorted(a,key=lambda x:x[1])
+    b_sort = sorted(b,key=lambda x:x[1])
+    c_sort = sorted(c,key=lambda x:x[1])
+    
+
+    if DEBUG_KHGSS_PRINT:
+      print(a_sort)
+      print(b_sort)
+      print(c_sort)
+    
+    point = lambda i : len(portfolio)-i
+    ret = dict([(p,0) for p in portfolio])
+    for i in range(len(portfolio)):
+      ret[a_sort[i][0]] += point(i)     
+      ret[b_sort[i][0]] += point(i)     
+      ret[c_sort[i][0]] += point(i)     
+    
+    if DEBUG_KHGSS_PRINT:
+      print(ret)
+
+    return sorted(ret.items(), key=lambda x:x[1])
+
 if __name__  == '__main__':
-  portfolio = ['월덱스', '이녹스첨단소재','해성디에스']
+  if 0:
+    portfolio = ['월덱스', '이녹스첨단소재','해성디에스','현대모비스','삼성전자','위메이드']
+  else:
+    portfolio = GetGroup.get('apple-oled')
   khgss = KHGSuper(portfolio = portfolio)
   
-  ret = khgss.get_parameter()
-  for p in portfolio:
-    print(p,ret[p])
+  priority = khgss.sort_by_priority()
+  print(priority)
