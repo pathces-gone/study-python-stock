@@ -1,8 +1,9 @@
 from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup as bs
 import pandas as pd
-import os
+import os, time
 from StockPrice import StockPrice
+from Manager import DEBUG_ELAPSED_TIME
 
 class FnGuide(object):
   @staticmethod
@@ -23,6 +24,9 @@ class FnGuide(object):
 
   @staticmethod
   def get_html(_code:str=None,_name:str=None, _page:int=0):
+    if DEBUG_ELAPSED_TIME:
+      start_time = time.time()
+
     if _code == None:
       if _name == None:
         return None
@@ -44,6 +48,10 @@ class FnGuide(object):
       html_text = urlopen(req).read()
     except AttributeError as e :
       return None
+    
+    if DEBUG_ELAPSED_TIME:
+      print("FnGuide get_html Elapsed Time : %.2f"%round(time.time()-start_time,2))
+
     return html_text, url
 
   @staticmethod

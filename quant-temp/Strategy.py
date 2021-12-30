@@ -30,7 +30,7 @@ class KHGSuper(object):
     return quant_indices
 
 if __name__  == '__main__':
-  portfolio = ['월덱스', '이녹스첨단소재']
+  portfolio = ['월덱스', '이녹스첨단소재','해성디에스']
   khgss = KHGSuper(portfolio = portfolio)
   
   ret = khgss.get_parameter()
