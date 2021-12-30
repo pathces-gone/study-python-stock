@@ -1,86 +1,97 @@
-# https://blog.naver.com/PostView.naver?blogId=htk1019&logNo=221266979613&parentCategoryNo=&categoryNo=27&viewDate=&isShowPopularPosts=true&from=search
-
 from urllib.request import urlopen, Request
 from bs4 import BeautifulSoup as bs
+import pandas as pd
+import os
+from StockPrice import StockPrice
 
+class FnGuide(object):
+  @staticmethod
+  def name_to_code(name:str):
+    path = os.path.join(os.path.dirname(__file__),'fsdata','listed_corporation.csv')
+    code_df = pd.read_csv(path)
 
-def get_html_fnguide(ticker, gb):
-    """    
-    :param ticker: 종목코드 
-    :param gb: 데이터 종류 (0 : 재무제표, 1 : 재무비율, 2: 투자지표, 3:컨센서스 )
-    :return: 
-    """
+    if code_df.empty:
+      StockPrice(item_name='',page=10).download_all_listed_corporation_as_csv()    
+      code_df = pd.read_csv(path)
+
+    code_df.종목코드 = code_df.종목코드.map('{:06d}'.format) 
+    code_df = code_df[['회사명', '종목코드']]
+    code_df = code_df.rename(columns={'회사명': 'name', '종목코드': 'code'})
+   
+    ret = code_df.loc[code_df['name'] == name]['code'].to_list()
+    return str(ret[0]) 
+
+  @staticmethod
+  def get_html(_code:str=None,_name:str=None, _page:int=0):
+    if _code == None:
+      if _name == None:
+        return None
+      else:
+        code = FnGuide.name_to_code(_name)
+
     url=[]
-
-    url.append("https://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGB=1&gicode=A" + ticker + "&cID=&MenuYn=Y&ReportGB=&NewMenuID=103&stkGb=701")
-    url.append("https://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A" + ticker + "&cID=&MenuYn=Y&ReportGB=&NewMenuID=104&stkGb=701")
-    url.append("https://comp.fnguide.com/SVO2/ASP/SVD_Invest.asp?pGB=1&gicode=A"+ ticker + "&cID=&MenuYn=Y&ReportGB=&NewMenuID=105&stkGb=701")
-    url.append("https://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp?pGB=1&gicode=A" + ticker +"&cID=&MenuYn=Y&ReportGB=&NewMenuID=108&stkGb=701")
-
-    if gb>3 :
-        return None
-
-    url = url[gb]
+    url.append("https://comp.fnguide.com/SVO2/ASP/SVD_Finance.asp?pGB=1&gicode=A" + code + "&cID=&MenuYn=Y&ReportGB=&NewMenuID=103&stkGb=701")
+    url.append("https://comp.fnguide.com/SVO2/ASP/SVD_FinanceRatio.asp?pGB=1&gicode=A" + code + "&cID=&MenuYn=Y&ReportGB=&NewMenuID=104&stkGb=701")
+    url.append("https://comp.fnguide.com/SVO2/ASP/SVD_Invest.asp?pGB=1&gicode=A"+ code + "&cID=&MenuYn=Y&ReportGB=&NewMenuID=105&stkGb=701")
+    url.append("https://comp.fnguide.com/SVO2/ASP/SVD_Consensus.asp?pGB=1&gicode=A" + code +"&cID=&MenuYn=Y&ReportGB=&NewMenuID=108&stkGb=701")
+    
+    if _page > len(url):
+      return None
+    url = url[_page]
+    
     try:
-
-        req = Request(url,headers={'User-Agent': 'Mozilla/5.0'})
-        html_text = urlopen(req).read()
-
+      req = Request(url,headers={'User-Agent': 'Mozilla/5.0'})
+      html_text = urlopen(req).read()
     except AttributeError as e :
-        return None
-
+      return None
     return html_text
 
+  @staticmethod
+  def get_data(_code:str=None, _name:str=None, _page:int=0, _item:str=None, _n=4, _term="annual"):
 
-
-
-def ext_fin_fnguide_data(ticker,gb,item,n,freq="a"):
     """
-    :param ticker: 종목코드
-    :param gb: 데이터 종류 (0 : 재무제표, 1 : 재무비율, 2: 투자지표)
-    :param item: html_text file에서 원하는 계정의 데이터를 가져온다.
-    :param n: 최근 몇 개의 데이터를 가져 올것인지
-    :param freq: a : 연간재무, q : 분기재무    
+    :param _code: 종목코드
+    :param _page: 데이터 종류 (0 : 재무제표, 1 : 재무비율, 2: 투자지표)
+    :param _item: html_text file에서 원하는 계정의 데이터를 가져온다.
+    :param _n: 최근 몇 개의 데이터를 가져 올것인지
+    :param _term: annual : 연간재무, quarter : 분기재무    
     :return: item의 과거 데이터
     """
-
-    html_text = get_html_fnguide(ticker, gb)
-
+    
+    html_text = FnGuide.get_html(_code,_name, _page)
+    assert html_text != None, "Fail to get_html." 
+    
     soup = bs(html_text, 'lxml')
+    d = soup.find_all(text=_item)
 
-    d = soup.find_all(text=item)
-    print(d)
     if(len(d)==0) :
-        return None
+      return None
 
-    #재무제표면 최근 3년을 가져오고 재무비율이면 최근 4년치를 가져온다.
-    nlimit =3 if gb==0 else 5
+    nlimit =3 if _page==0 else 5
 
-    if n > nlimit :
-        return None
-    if freq == 'a':
-        #연간 데이터
-        d_ = d[0].find_all_next(class_="r",limit=nlimit)
-        # 분기 데이터
-    elif freq =='q':
-        d_ = d[1].find_all_next(class_="r",limit=nlimit)
+    if _n > nlimit :
+      return None
+    
+    if _term == "annual":
+      d_ = d[0].find_all_next(class_="r",limit=nlimit)
+      print(0)
+
+    elif _term =="quarter":
+      d_ = d[1].find_all_next(class_="r",limit=nlimit)
     else:
-        d_ = None
+      d_ = None
 
     try :
-        data = d_[(nlimit-n):nlimit]
-        v = [v.text for v in data]
-
+      data = d_[(nlimit-_n):nlimit]
+      v = [v.text for v in data]
     except AttributeError as e:
-        return None
+      return None
 
     return(v)
 
 
 if __name__ == '__main__':
-    #ret = get_html_fnguide('005930',2)
-    ret = ext_fin_fnguide_data("005930",2,"EV",5,"a")
-    print(ret)
+  # https://blog.naver.com/PostView.naver?blogId=htk1019&logNo=221266979613&parentCategoryNo=&categoryNo=27&viewDate=&isShowPopularPosts=true&from=search
+  ret = FnGuide.get_data(_name="이녹스첨단소재", _page=2,_item="EV",_n=5,_term="quarter")
+  print(ret)
 
-    ret = ext_fin_fnguide_data("005930",2,"EBITDA",5,"a")
-    print(ret)

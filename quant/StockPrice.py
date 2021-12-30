@@ -53,7 +53,7 @@ class StockPrice:
   
   @classmethod
   def download_all_listed_corporation_as_csv(cls):
-    path = os.path.join(os.path.dirname(__file__) + 'listed_corporation.csv')
+    path = os.path.join(os.path.dirname(__file__), 'listed_corporation.csv')
     print("Download listed_corporation.csv to %s"%path)
     if cls.code_df is None:
       cls.code_df  = pd.read_html('http://kind.krx.co.kr/corpgeneral/corpList.do?method=download&searchType=13', header=0)[0]
