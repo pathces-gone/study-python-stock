@@ -38,13 +38,13 @@ class FnGuide(object):
     if _page > len(url):
       return None
     url = url[_page]
-    
+
     try:
       req = Request(url,headers={'User-Agent': 'Mozilla/5.0'})
       html_text = urlopen(req).read()
     except AttributeError as e :
       return None
-    return html_text
+    return html_text, url
 
   @staticmethod
   def get_data(_code:str=None, _name:str=None, _page:int=0, _item:str=None, _n=4, _term="annual"):
@@ -58,7 +58,7 @@ class FnGuide(object):
     :return: item의 과거 데이터
     """
     
-    html_text = FnGuide.get_html(_code,_name, _page)
+    html_text, url = FnGuide.get_html(_code,_name, _page)
     assert html_text != None, "Fail to get_html." 
     
     soup = bs(html_text, 'lxml')
@@ -74,7 +74,6 @@ class FnGuide(object):
     
     if _term == "annual":
       d_ = d[0].find_all_next(class_="r",limit=nlimit)
-      print(0)
 
     elif _term =="quarter":
       d_ = d[1].find_all_next(class_="r",limit=nlimit)
@@ -87,11 +86,11 @@ class FnGuide(object):
     except AttributeError as e:
       return None
 
-    return(v)
+    return v, url
 
 
 if __name__ == '__main__':
   # https://blog.naver.com/PostView.naver?blogId=htk1019&logNo=221266979613&parentCategoryNo=&categoryNo=27&viewDate=&isShowPopularPosts=true&from=search
-  ret = FnGuide.get_data(_name="이녹스첨단소재", _page=2,_item="EV",_n=5,_term="quarter")
+  ret,_ = FnGuide.get_data(_name="이녹스첨단소재", _page=2,_item="EV",_n=5,_term="quarter")
   print(ret)
 
