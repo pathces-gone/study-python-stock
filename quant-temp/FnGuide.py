@@ -55,8 +55,25 @@ class FnGuide(object):
     return html_text, url
 
   @staticmethod
-  def get_data(_code:str=None, _name:str=None, _page:int=0, _item:str=None, _n=4, _term="annual"):
+  def get_multiples_prev_quater(code:str=None, name:str=None, item:str=None):
+    """ Return float
+      Multiples: per, psr, pcr, ev/ebit, pbr
+    """
+    html_text, url = FnGuide.get_html(code,name, 2)
+    assert html_text != None, "Fail to get_html." 
+        
+    soup = bs(html_text, 'lxml')
+    d = soup.find_all(text=item)
+    if(d == None):
+      return None
+    f1 = (d[-1].find_all_next(class_="cle r tdbg_y",limit=3))
+    v = [v.text for v in f1]
+    v= [v[1],v[2]]
+    ret = round(float(v[0].replace(',',''))/float(v[1].replace(',','')),2)
+    return ret 
 
+  @staticmethod
+  def get_data(_code:str=None, _name:str=None, _page:int=0, _item:str=None, _n=4, _term="annual"):
     """
     :param _code: 종목코드
     :param _page: 데이터 종류 (0 : 재무제표, 1 : 재무비율, 2: 투자지표)
@@ -75,16 +92,23 @@ class FnGuide(object):
     if(len(d)==0) :
       return None
 
-    nlimit =3 if _page==0 else 5
+    nlimit =3 if _page==0 else 4
 
     if _n > nlimit :
       return None
-    
+
     if _term == "annual":
-      d_ = d[0].find_all_next(class_="r",limit=nlimit)
+      if _page == 0:
+        d_ = d[0].find_all_next(class_="r",limit=nlimit)
+      else:
+        d_ = d[-1].find_all_next(class_="r",limit=nlimit)
 
     elif _term =="quarter":
-      d_ = d[1].find_all_next(class_="r",limit=nlimit)
+      if _page:
+        d_ = d[1].find_all_next(class_="r",limit=nlimit)
+      else:
+        d_ = d[-1].find_all_next(class_="r",limit=nlimit)
+
     else:
       d_ = None
 
@@ -99,6 +123,8 @@ class FnGuide(object):
 
 if __name__ == '__main__':
   # https://blog.naver.com/PostView.naver?blogId=htk1019&logNo=221266979613&parentCategoryNo=&categoryNo=27&viewDate=&isShowPopularPosts=true&from=search
-  ret,_ = FnGuide.get_data(_name="이녹스첨단소재", _page=2,_item="EV",_n=5,_term="quarter")
+  ret,_ = FnGuide.get_data(_name="이녹스첨단소재", _page=2,_item="PER",_n=5,_term="quarter")
   print(ret)
+  FnGuide.get_multiples_prev_quater(name="삼성전자",item="PER")
+  
 
