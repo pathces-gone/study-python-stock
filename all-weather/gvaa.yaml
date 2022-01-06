@@ -1,0 +1,18 @@
+gvaa:
+  gold:
+    - etf: 'a'
+      ratio: 10
+    - etf: 'a2'
+      ratio: 10
+  long-term-bond:
+    - etf: 'b'
+      ratio: 20
+  mid-term-bond:
+    - etf: 'c'
+      ratio: 20
+  spy:
+    - etf: 'd'
+      ratio: 20
+  raw-materials:
+    - etf: 'e'
+      ratio: 20
