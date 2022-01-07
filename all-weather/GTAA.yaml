@@ -1,0 +1,22 @@
+GTAA:
+  SPY:
+    - etf: '219480'
+      comment: 'KODEX 미국S&P500선물(H)'
+      ratio: 20
+  IEF:
+    - etf: '308620'
+      comment: 'KODEX 미국채10년선물'
+      ratio: 20
+  VNQ:
+    - etf: '182480'
+      comment: 'TIGER 미국MSCI리츠(합성 H)'
+      ratio: 20
+  DBC:
+    - etf: '/DBC'
+      comment: 'DBC.yaml'
+      ratio: 20
+  VGK:
+    - etf: '195930'
+      comment: 'TIGER 유로스탁스50(합성 H)'
+      ratio: 20
+
