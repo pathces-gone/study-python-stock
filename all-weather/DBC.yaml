@@ -12,8 +12,8 @@ DBC:
       comment: 'TIGER 금속선물(H)'
       ratio: 16
   RareMetal:
-    - etf: '319640'
-      comment: 'TIGER 골드선물(H)'
+    - etf: '132030' #'319640'
+      comment: 'KODEX 골드선물(H)' #'TIGER 골드선물(H)'
       ratio: 7
     - etf: '144600'
       comment: 'KODEX 은선물(H)'

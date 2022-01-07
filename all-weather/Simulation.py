@@ -22,7 +22,19 @@ class ETF(object):
       price_df = ETFUtils.utils_get_price(code=self.code,page=100)
       price_df.to_csv(self.path,encoding='utf-8')
 
-    price = price_df.loc[price_df['Date'] == date]['Close'].to_list()[0]
+    price = 0
+    if not price_df.loc[price_df['Date'] == date].empty:
+      price = price_df.loc[price_df['Date'] == date]['Close'].to_list()[0]
+    else:
+      next_date = datetime.datetime.strptime(date,"%Y-%m-%d")
+      for retry in range(14):
+        next_date = next_date + datetime.timedelta(days=1)
+        cond_df = price_df.loc[price_df['Date'] == next_date.strftime('%Y-%m-%d')]
+        if not cond_df.empty:
+          price = cond_df['Close'].to_list()[0]
+          break
+
+    assert price!=0 ,"%s : %s , %s"%(self.name, self.code ,date)
     return price
 
 
@@ -99,7 +111,7 @@ class Simulation(object):
     for i,etf in enumerate(etfs):
       total_buy +=  prices[i]*qtys[i] 
       print("%20s | %s %20s | %10d %10.2f %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,budgets[i],ratios[i],prices[i],qtys[i], prices[i]*qtys[i]) )
-    
+    print('-'*140)
     print('Total: %10d\n\n'%total_buy)
     return [total_buy, prices, qtys]
 
@@ -109,13 +121,14 @@ class Simulation(object):
     prices  = [etf.get_price(date=date) for etf in etfs]
 
     print('\nSell - %s'%self.portpolio.name)
-    print("%20s | %30s %20s | %10s %10s %10s %10s %10s"%('index','name','code','buy','ratio(%)', 'sell price', 'qty', 'sell'))
-    print('-'*140)
+    print("%20s | %30s %20s | %10s %10s %15s %10s %10s %15s"%('index','name','code','buy','ratio(%)', 'sell price', 'qty', 'sell', 'earn ratio(%)'))
+    print('-'*160)
     total_sell = 0
     for i,etf in enumerate(etfs):
-      total_sell +=  prices[i]*buy_qtys[i] 
-      print("%20s | %s %20s | %10d %10.2f %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,  buy_prices[i]*buy_qtys[i] ,ratios[i],buy_prices[i], buy_qtys[i], prices[i]*buy_qtys[i]))
-    
+      total_sell +=  prices[i]*buy_qtys[i]
+      earn_ratio = (prices[i]-buy_prices[i])/buy_prices[i]*buy_qtys[i]
+      print("%20s | %s %20s | %10d %10.2f %15d %10d %10d %15.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,  buy_prices[i]*buy_qtys[i] ,ratios[i], prices[i], buy_qtys[i], prices[i]*buy_qtys[i], earn_ratio))
+    print('-'*160)
     print('Total: %10d\n\n'%total_sell)
     return total_sell
     
@@ -125,7 +138,7 @@ if __name__ == '__main__':
   portpolio_name = 'GTAA'
   capital = 10_000_000
 
-  buy_date  = '2021-10-22'
+  buy_date  = '2018-11-03'
   sell_date = '2022-01-03'
 
   sim = Simulation(portpolio=Portpolio(portpolio_name), capital=capital)

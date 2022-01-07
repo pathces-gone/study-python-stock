@@ -28,12 +28,12 @@ class ETFTable(object):
       #print(name.text, i)
       if name.text.find(etf) != -1:
         print(name.text,tag_codes[i].text)
-        return tag_codes[i].text
+        #return tag_codes[i].text
     return 0
 
 if __name__ == '__main__':
   etf = ETFTable()
   
-  n1 = 'TIGER 유로스탁스50'
+  n1 = '10년'
   c1 = etf.get_code(etf = n1)
   
