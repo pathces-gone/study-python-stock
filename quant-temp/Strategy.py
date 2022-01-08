@@ -10,7 +10,7 @@ from GetGroup import *
 
 class KHGSuper(object):
   """ KHU
-  
+    
   
   """
   def __init__(self, portfolio:list):

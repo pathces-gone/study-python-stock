@@ -2,89 +2,12 @@ import yaml
 import os, datetime, requests
 import numpy as np
 import ETFUtils
+from ETF import ETF
+from Portpolio import Portpolio
 import pandas as pd
 
-
-class ETF(object):
-  """ Return ETF
-    ETF object
-  """
-  def __init__(self, name:str, code:str, index:str):
-    self.name  =name
-    self.code  =code
-    self.index =index
-    self.path = os.path.join('fsdata','%s.csv'%self.code)
-
-  def get_price(self, date:str):
-    if os.path.exists(self.path):
-      price_df = pd.read_csv(self.path)
-    else:
-      price_df = ETFUtils.utils_get_price(code=self.code,page=100)
-      price_df.to_csv(self.path,encoding='utf-8')
-
-    price = 0
-    if not price_df.loc[price_df['Date'] == date].empty:
-      price = price_df.loc[price_df['Date'] == date]['Close'].to_list()[0]
-    else:
-      next_date = datetime.datetime.strptime(date,"%Y-%m-%d")
-      for retry in range(14):
-        next_date = next_date + datetime.timedelta(days=1)
-        cond_df = price_df.loc[price_df['Date'] == next_date.strftime('%Y-%m-%d')]
-        if not cond_df.empty:
-          price = cond_df['Close'].to_list()[0]
-          break
-
-    assert price!=0 ,"%s : %s , %s"%(self.name, self.code ,date)
-    return price
-
-
-class Portpolio(object):
-  """ Return Portpolio
-    Portpolio Node (ETF chain)
-  """
-  def __init__(self, name):
-    self.name = name
-
-  @staticmethod
-  def get_yaml(index:str)->list:
-    yaml_file_path = os.path.join(os.path.dirname(__file__))
-    with open(os.path.join(yaml_file_path, '%s.yaml'%index)) as f:
-      conf = yaml.load(f, Loader=yaml.FullLoader)
-    return conf
-
-  def get_etf(self):
-    name = self.name
-    yaml = Portpolio.get_yaml(name)
-
-    etf_name = np.array([])
-    etf_code = np.array([])
-    cmds = np.array([], np.int32)
-    ratios = np.array([], np.float32)
-
-    sub_portpolio = []
-    sub_ratios = []
-    for i,label in enumerate(yaml[name].values()):
-      for sub_label in label:
-        if sub_label['etf'].find('/') != -1:
-          sub_portpolio, sub_ratios = Portpolio(name=sub_label['etf'][1:]).get_etf()
-          sub_ratios = [(sub_label['ratio']/100)*sr for sr in sub_ratios]
-          continue
-        etf_code   = np.append(etf_code, sub_label['etf'])  
-        etf_name   = np.append(etf_name, sub_label['comment'])
-        ratios = np.append(ratios,sub_label['ratio'])
-        cmds = np.append(cmds, i)
-
-    portpolio = []
-    for i,etf in enumerate(etf_code):
-      tmp = list(yaml[name].keys())
-      portpolio.append( ETF(name=etf_name[i], code=etf_code[i], index= tmp[cmds[i]]))
-    
-    portpolio = [*portpolio, *sub_portpolio]
-    ratios = [*ratios, *sub_ratios]
-    assert np.sum(ratios) == 100, ""
-
-    return [portpolio, ratios]
-
+PRINT_BUY_PORTPOLIO  = True
+PRINT_SELL_PORTPOLIO = True
 
 class Simulation(object):
   """ Return Simulation
@@ -93,8 +16,89 @@ class Simulation(object):
   def __init__(self, portpolio:Portpolio, capital:int):
     self.portpolio = portpolio
     self.capital = capital
+    self.cash    = capital
 
-  def buy(self, date:str):
+
+    self.avg_price = dict()
+    self.hold_qtys = dict()
+    self.earn= dict()
+
+    for etf in portpolio.get_etf()[0]:
+      self.avg_price[etf.code]  =0 
+      self.hold_qtys[etf.code]  =0
+      self.earn[etf.code] =0
+
+
+  def buy(self, etf:ETF, date:str ,qty:int=0):
+    """ Return
+
+    """
+    last_qty = self.hold_qtys[etf.code]
+
+    add_qty = qty
+    curr_price = etf.get_price(date=date)
+
+    if curr_price*add_qty <= self.cash:
+      self.hold_qtys[etf.code]  = last_qty + add_qty
+      self.avg_price[etf.code] = (self.avg_price[etf.code]*last_qty+curr_price*add_qty)/self.hold_qtys[etf.code]
+      self.cash -= curr_price*add_qty
+      ret = True
+    else:
+      ret = False
+    return ret
+
+
+  def sell(self, etf:ETF, date:str ,qty:int=0):
+    """ Return
+
+    """
+    last_qty = self.hold_qtys[etf.code]
+    value    = self.earn[etf.code]
+
+    sell_qty = qty
+    curr_price = etf.get_price(date=date)
+
+    if last_qty >= sell_qty:
+      self.hold_qtys[etf.code]  = last_qty - sell_qty
+      self.earn[etf.code] += (curr_price - self.avg_price[etf.code])*sell_qty
+      self.cash += curr_price*sell_qty
+      ret = True
+    else:
+      ret = False
+    return ret    
+
+
+
+  def print_info(self):
+    """ Return
+
+    """
+    etfs,_ = self.portpolio.get_etf()
+    print('Portpoilo Info - %s'%self.portpolio.name)
+    print("%20s | %30s %20s | %10s %10s %10s %10s %10s"%('index','name','code','ratio(%)', 'price', 'qty', 'buy', 'earn'))
+    print('-'*140)
+    total_buy = 0
+    for i,etf in enumerate(etfs):
+      qty   = self.hold_qtys[etf.code]
+      price  = self.avg_price[etf.code]
+      value = qty*price
+      ratios = (value/self.capital*100)
+
+      earn = self.earn[etf.code]
+      total_buy += value
+
+      print("%20s | %s %20s | %10.2f %10d %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,ratios, price, qty, value,earn) )
+    print('-'*140)
+    print('Total:')
+    print('\tbudget: %10d\n\t\tbuy: %10d\n\t\tcash: %10d  \n\n'%(self.capital,total_buy,self.cash))
+    print('\tcurr/budget=%12d/%12d [%4.2f%%]'%(total_buy+self.cash, self.capital,(total_buy+self.cash)/self.capital*100))
+
+
+
+  def buy_portpolio(self, date:str):
+    """ Return
+
+    """
     capital = self.capital
     etfs,ratios = self.portpolio.get_etf()
     budgets = np.multiply(ratios,0.01*capital)
@@ -104,47 +108,108 @@ class Simulation(object):
     for i,etf in enumerate(etfs):
       qtys = np.append(qtys, int(budgets[i]/prices[i]))
 
-    print('\nBuy - %s'%self.portpolio.name)
-    print("%20s | %30s %20s | %10s %10s %10s %10s %10s"%('index','name','code','budget','ratio(%)', 'price', 'qty', 'buy'))
-    print('-'*140)
-    total_buy = 0
-    for i,etf in enumerate(etfs):
-      total_buy +=  prices[i]*qtys[i] 
-      print("%20s | %s %20s | %10d %10.2f %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,budgets[i],ratios[i],prices[i],qtys[i], prices[i]*qtys[i]) )
-    print('-'*140)
-    print('Total: %10d\n\n'%total_buy)
+    if PRINT_BUY_PORTPOLIO==True:
+      print('\nBuy - %s'%self.portpolio.name)
+      print("%20s | %30s %20s | %10s %10s %10s %10s %10s"%('index','name','code','budget','ratio(%)', 'price', 'qty', 'buy'))
+      print('-'*140)
+      total_buy = 0
+      for i,etf in enumerate(etfs):
+        self.buy(etf=etf, date=date, qty=qtys[i])
+        total_buy += prices[i]*qtys[i] 
+        print("%20s | %s %20s | %10d %10.2f %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,budgets[i],ratios[i],prices[i],qtys[i], prices[i]*qtys[i]) )
+      print('-'*140)
+      print('Total: %10d\n\n'%total_buy)
+    else:
+      total_buy = 0
+      for i,etf in enumerate(etfs):
+        self.buy(etf=etf, date=date, qty=qtys[i])
+        total_buy +=  prices[i]*qtys[i]
+
     return [total_buy, prices, qtys]
 
 
-  def sell(self, date:str,buy_prices:np.ndarray, buy_qtys:np.ndarray):
+  def sell_portpolio(self, date:str,buy_prices:np.ndarray, buy_qtys:np.ndarray):
+    """ Return
+      
+    """
     etfs,ratios = self.portpolio.get_etf()
     prices  = [etf.get_price(date=date) for etf in etfs]
 
-    print('\nSell - %s'%self.portpolio.name)
-    print("%20s | %30s %20s | %10s %10s %15s %10s %10s %15s"%('index','name','code','buy','ratio(%)', 'sell price', 'qty', 'sell', 'earn ratio(%)'))
-    print('-'*160)
-    total_sell = 0
-    for i,etf in enumerate(etfs):
-      total_sell +=  prices[i]*buy_qtys[i]
-      earn_ratio = (prices[i]-buy_prices[i])/buy_prices[i]*buy_qtys[i]
-      print("%20s | %s %20s | %10d %10.2f %15d %10d %10d %15.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,  buy_prices[i]*buy_qtys[i] ,ratios[i], prices[i], buy_qtys[i], prices[i]*buy_qtys[i], earn_ratio))
-    print('-'*160)
-    print('Total: %10d\n\n'%total_sell)
+    if PRINT_SELL_PORTPOLIO==True:
+      print('\nSell - %s'%self.portpolio.name)
+      print("%20s | %30s %20s | %10s %10s %15s %10s %10s %15s"%('index','name','code','buy','ratio(%)', 'sell price', 'qty', 'sell', 'earn ratio(%)'))
+      print('-'*160)
+      total_sell = 0
+      for i,etf in enumerate(etfs):
+        self.sell(etf=etf, date=date, qty=buy_qtys[i])
+        total_sell +=  prices[i]*buy_qtys[i]
+        earn_ratio = (prices[i]-buy_prices[i])/buy_prices[i]*buy_qtys[i]
+        print("%20s | %s %20s | %10d %10.2f %15d %10d %10d %15.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,  buy_prices[i]*buy_qtys[i] ,ratios[i], prices[i], buy_qtys[i], prices[i]*buy_qtys[i], earn_ratio))
+      print('-'*160)
+      print('Total: %10d\n\n'%total_sell)
+    else:
+      total_sell = 0
+      for i,etf in enumerate(etfs):
+        self.sell(etf=etf, date=date, qty=buy_qtys[i])
+        total_sell +=  prices[i]*buy_qtys[i]
+
     return total_sell
-    
+  
+
+  def Run(self, start_date:str, end_date:str):
+    if 0:
+      total_buy, buy_prices, buy_qtys = self.buy_portpolio(date=start_date)
+      total_sell = self.sell_portpolio(date=end_date, buy_prices=buy_prices, buy_qtys=buy_qtys)
+
+      earn_ratio = round((total_sell-total_buy)/total_buy*100, 2)
+      print("GTAA - %12s to %12s:   buy=%10d, sell=%10d, earn_ratio=%10.2f%%\n"%(start_date,end_date,total_buy,total_sell,earn_ratio))
+    else:
+      """ Algorithm
+        시작시간부터 하루하루 넘어가면서 simulation
+        * (지수저가이평 220일선 기준 buy-sell)
+      """
+      _end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d")
+
+      total_buy, buy_prices, buy_qtys = self.buy_portpolio(date=start_date)
+
+      etfs,ratios = self.portpolio.get_etf()
+      self.print_info()
+
+      # make stratgy
+      pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
+
+      while(pivot_date < _end_date):
+        """
+          Stratgy
+        """
+        #commend,s_qty = strategy()
+        commend,s_qty = ['SELL',10]
+
+        if commend == 'SELL':
+          self.sell(etf=etfs[0],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
+        elif commend == 'BUY':
+          self.buy(etf=etfs[0],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
+        else:
+          pass
+
+        pivot_date = ETFUtils.get_next_date(pivot_date)
+
+      self.print_info()
 
 
 if __name__ == '__main__':
   portpolio_name = 'GTAA'
+  portpolio = Portpolio(portpolio_name)
   capital = 10_000_000
 
-  buy_date  = '2018-11-03'
-  sell_date = '2022-01-03'
 
-  sim = Simulation(portpolio=Portpolio(portpolio_name), capital=capital)
-  total_buy, buy_prices, buy_qtys = sim.buy(date=buy_date)
-  total_sell = sim.sell(date=sell_date, buy_prices=buy_prices, buy_qtys=buy_qtys)
+  start_date  = '2018-11-03'
+  end_date = '2019-04-03'
+  sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date)
+  #sim = Simulation(portpolio=portpolio, capital=capital).print_info()
   
-  earn_ratio = round((total_sell-total_buy)/total_buy*100, 2)
-  print("GTAA - %12s to %12s:   buy=%10d, sell=%10d, earn_ration=%10.2f"%(buy_date,sell_date,total_buy,total_sell,earn_ratio))
-  #today = datetime.datetime.now().strftime("%Y%m%d")
+
+  if 0:
+    etfs,_ = portpolio.get_etf()
+    print(etfs[0])
+    etfs[0].get_chart()

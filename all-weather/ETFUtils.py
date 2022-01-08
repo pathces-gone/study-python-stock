@@ -1,14 +1,16 @@
 import unicodedata
+
+from pandas.core.frame import DataFrame
  
 def preformat_cjk (string, width, align='<', fill=' '):
-    count = (width - sum(1 + (unicodedata.east_asian_width(c) in "WF")
-                         for c in string))
-    return {
-        '>': lambda s: fill * count + s,
-        '<': lambda s: s + fill * count,
-        '^': lambda s: fill * (count / 2)
-                       + s
-                       + fill * (count / 2 + count % 2)
+  count = (width - sum(1 + (unicodedata.east_asian_width(c) in "WF")
+                        for c in string))
+  return {
+      '>': lambda s: fill * count + s,
+      '<': lambda s: s + fill * count,
+      '^': lambda s: fill * (count / 2)
+                      + s
+                      + fill * (count / 2 + count % 2)
 }[align](string)
 
 
@@ -19,31 +21,51 @@ from bs4 import BeautifulSoup as bs
 import time
 
 def utils_get_price(code:str, page:int=2):
-    #start_time = time.time()
-    print('*',end=' ')
-    url = 'http://finance.naver.com/item/sise_day.nhn?code={code}'.format(code=code)
-    def get_html_table(url:str):
-      headers =  {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36'}
-      response = requests.get(url, headers=headers)
-      html = bs(response.text, 'lxml')
-      html_table = html.select('table') 
-      return str(html_table)
+  #start_time = time.time()
+  print('*',end=' ')
+  url = 'http://finance.naver.com/item/sise_day.nhn?code={code}'.format(code=code)
+  def get_html_table(url:str):
+    headers =  {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36'}
+    response = requests.get(url, headers=headers)
+    html = bs(response.text, 'lxml')
+    html_table = html.select('table') 
+    return str(html_table)
 
 
-    df = pd.DataFrame()
-    for _page in range(1, page):
-      pg_url = '{url}&page={page}'.format(url=url, page=_page).replace(' ','')
-      html_table = get_html_table(pg_url)
-      df = df.append(pd.read_html(html_table, header=0)[0], ignore_index=True)
-    df = df.dropna()
+  df = pd.DataFrame()
+  for _page in range(1, page):
+    pg_url = '{url}&page={page}'.format(url=url, page=_page).replace(' ','')
+    html_table = get_html_table(pg_url)
+    df = df.append(pd.read_html(html_table, header=0)[0], ignore_index=True)
+  df = df.dropna()
 
-    assert df.empty == False, "the requested dataframe is empty."
+  assert df.empty == False, "the requested dataframe is empty."
 
-    
-    df = df.rename(columns= {'날짜': 'Date', '종가': 'Close', '전일비': 'Diff', '시가': 'Open', '고가': 'High', '저가': 'Low', '거래량': 'Volume'}) 
-    df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']] = df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']].astype(int) 
-    df['Date'] = pd.to_datetime(df['Date']) 
-    df = df.sort_values(by=['Date'], ascending=True)
+  
+  df = df.rename(columns= {'날짜': 'Date', '종가': 'Close', '전일비': 'Diff', '시가': 'Open', '고가': 'High', '저가': 'Low', '거래량': 'Volume'}) 
+  df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']] = df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']].astype(int) 
+  df['Date'] = pd.to_datetime(df['Date']) 
+  df = df.sort_values(by=['Date'], ascending=True)
 
-    #print("Elapsed Time : %.2f"%round(time.time()-start_time,2))
-    return df
+  #print("Elapsed Time : %.2f"%round(time.time()-start_time,2))
+  return df
+
+
+
+import datetime
+from mplfinance.original_flavor import candlestick2_ohlc
+import matplotlib.pyplot as plt
+
+def plot_candle_chart(price:DataFrame): 
+  fig = plt.figure(figsize=(20,5))
+  ax = fig.add_subplot(1,1,1)
+
+  candlestick2_ohlc(ax, price['Open'],price['High'],price['Low'], price['Close'], width=0.5, colorup='r', colordown='b')
+  plt.show()
+
+
+
+
+def get_next_date(today:datetime)->datetime:
+  next_date = today + datetime.timedelta(days=1)
+  return next_date

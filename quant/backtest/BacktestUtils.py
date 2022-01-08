@@ -9,11 +9,11 @@ from pandas.core.frame import DataFrame
 class BacktestUtils(object):
   @staticmethod
   def get_price(item_name='삼성전자', page=10)->DataFrame:
-    df = StockPrice(item_name=item_name, page=page).get_price(live=True)
+    df = StockPrice(item_name=item_name, page=page).get_price(live=False)
     df.set_index(df.columns[0], inplace=True)
     df.index.rename('', inplace=True)
     return df
 
 if __name__ == '__main__':
-  new =BacktestUtils.get_price()
+  new =BacktestUtils.get_price(page=10)
   print(new)
