@@ -8,8 +8,8 @@ import pandas as pd
 import Strategy
 
 
-PRINT_BUY_PORTPOLIO  = True
-PRINT_SELL_PORTPOLIO = True
+PRINT_BUY_PORTPOLIO  = False
+PRINT_SELL_PORTPOLIO = False
 
 class Simulation(object):
   """ Return Simulation
@@ -42,7 +42,7 @@ class Simulation(object):
 
     if curr_price*add_qty <= self.cash:
       self.hold_qtys[etf.code]  = last_qty + add_qty
-      self.avg_price[etf.code] = (self.avg_price[etf.code]*last_qty+curr_price*add_qty)/self.hold_qtys[etf.code]
+      self.avg_price[etf.code] = (self.avg_price[etf.code]*last_qty+curr_price*add_qty)/self.hold_qtys[etf.code] if self.hold_qtys[etf.code] else 0
       self.cash -= curr_price*add_qty
       ret = True
     else:
@@ -85,7 +85,6 @@ class Simulation(object):
       price  = self.avg_price[etf.code]
       value = qty*price
       ratios = (value/self.capital*100)
-
       earn = self.earn[etf.code]
       total_buy += value
 
@@ -94,7 +93,7 @@ class Simulation(object):
     print('Total:')
     print('\tbudget: %10d\n\t\tbuy: %10d\n\t\tcash: %10d  \n\n'%(self.capital,total_buy,self.cash))
     print('\tcurr/budget=%12d/%12d [%4.2f%%]'%(total_buy+self.cash, self.capital,(total_buy+self.cash)/self.capital*100))
-
+    print('\n\n')
 
 
   def buy_portpolio(self, date:str):
@@ -184,18 +183,22 @@ class Simulation(object):
         """
           Stratgy
         """
-        commend,s_qty = Strategy.Strategy.abs_momentum()
-        #commend,s_qty = ['SELL',10]
+        
+        for i,etf in enumerate(etfs):
+          commend,s_qty = Strategy.Strategy.abs_momentum(etf=etfs[i],date=pivot_date)
 
-        if commend == 'SELL':
-          self.sell(etf=etfs[0],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
-        elif commend == 'BUY':
-          self.buy(etf=etfs[0],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
-        else:
-          pass
+          if commend == 'SELL':
+            self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
+          elif commend == 'BUY':
+            self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
+          else:
+            pass
 
         pivot_date = ETFUtils.get_next_date(pivot_date)
 
+      self.print_info()
+      for i,etf in enumerate(etfs):
+        self.sell(etf=etf,date=_end_date.strftime('%Y-%m-%d'),qty=self.hold_qtys[etf.code])
       self.print_info()
 
 
@@ -205,8 +208,8 @@ if __name__ == '__main__':
   capital = 10_000_000
 
 
-  start_date  = '2018-11-03'
-  end_date = '2019-04-03'
+  start_date  = '2019-04-02'
+  end_date = '2021-04-03'
   sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date)
   #sim = Simulation(portpolio=portpolio, capital=capital).print_info()
   
