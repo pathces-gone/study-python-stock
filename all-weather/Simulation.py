@@ -5,6 +5,8 @@ import ETFUtils
 from ETF import ETF
 from Portpolio import Portpolio
 import pandas as pd
+import Strategy
+
 
 PRINT_BUY_PORTPOLIO  = True
 PRINT_SELL_PORTPOLIO = True
@@ -182,8 +184,8 @@ class Simulation(object):
         """
           Stratgy
         """
-        #commend,s_qty = strategy()
-        commend,s_qty = ['SELL',10]
+        commend,s_qty = Strategy.Strategy.abs_momentum()
+        #commend,s_qty = ['SELL',10]
 
         if commend == 'SELL':
           self.sell(etf=etfs[0],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
