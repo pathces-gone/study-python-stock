@@ -1,0 +1,14 @@
+GTAA-NON:
+  IEF:
+    - etf: '308620'
+      comment: 'KODEX 미국채10년선물'
+      ratio: 30
+  VNQ:
+    - etf: '182480'
+      comment: 'TIGER 미국MSCI리츠(합성 H)'
+      ratio: 30
+  DBC:
+    - etf: '/DBC'
+      comment: 'DBC.yaml'
+      ratio: 30
+

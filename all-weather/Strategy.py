@@ -27,9 +27,8 @@ class Strategy(object):
             v1 < v2 :SELL
             v2 < v1 :BUY
         """
-
         SELL_QTY = 20
-        BUY_QTY = 5
+        BUY_QTY = 10
 
         if v1 < v2:
             commend   = 'SELL'
@@ -44,7 +43,7 @@ class Strategy(object):
         return [commend, update_qty]
 
     @staticmethod
-    def abs_momentum2(etf:ETF, date:str):
+    def abs_momentum(etf:ETF, date:str):
         """
             모멘텀기준 12개월 전 가격 (추세추종 돌파매매)
             Trades/Year=1.2
@@ -58,7 +57,7 @@ class Strategy(object):
         return Strategy.compare(v1=v1,v2=v2)
 
     @staticmethod
-    def abs_momentum(etf:ETF, date:str):
+    def abs_momentum2(etf:ETF, date:str):
         """
             300일 이동평균선
         """
@@ -80,4 +79,10 @@ class Strategy(object):
     def dual_momentum(etf:ETF):
         commend   = 'SELL'
         update_qty= 10
+        return [commend, update_qty]
+
+    @staticmethod
+    def hold(etf:ETF):
+        commend   = 'HOLD'
+        update_qty= 0
         return [commend, update_qty]

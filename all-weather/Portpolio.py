@@ -52,7 +52,7 @@ class Portpolio(object):
     
     portpolio = [*portpolio, *sub_portpolio]
     ratios = [*ratios, *sub_ratios]
-    assert np.sum(ratios) == 100, ""
+    assert np.sum(ratios) <= 100, ""
 
     self.etf = copy.deepcopy(portpolio[0])
     self.portpolio = copy.deepcopy(portpolio)

@@ -171,61 +171,56 @@ class Simulation(object):
     return total_sell
   
 
-  def Run(self, start_date:str, end_date:str):
-    if 0:
-      total_buy, buy_prices, buy_qtys = self.buy_portpolio(date=start_date)
-      total_sell = self.sell_portpolio(date=end_date, buy_prices=buy_prices, buy_qtys=buy_qtys)
+  def Run(self, start_date:str, end_date:str, what:str):
+    """ Algorithm
+      시작시간부터 하루하루 넘어가면서 simulation
+    """
+    _end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d")
 
-      earn_ratio = round((total_sell-total_buy)/total_buy*100, 2)
-      print("GTAA - %12s to %12s:   buy=%10d, sell=%10d, earn_ratio=%10.2f%%\n"%(start_date,end_date,total_buy,total_sell,earn_ratio))
-    else:
-      """ Algorithm
-        시작시간부터 하루하루 넘어가면서 simulation
-        * (지수저가이평 220일선 기준 buy-sell)
+    total_buy, buy_prices, buy_qtys = self.buy_portpolio(date=start_date)
+
+    etfs,ratios = self.portpolio.get_etf()
+    #self.print_info()
+
+    pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
+    while(pivot_date < _end_date):
       """
-      _end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d")
-
-      total_buy, buy_prices, buy_qtys = self.buy_portpolio(date=start_date)
-
-      etfs,ratios = self.portpolio.get_etf()
-      self.print_info()
-
-      # make stratgy
-      pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
-
-      while(pivot_date < _end_date):
-        """
-          Stratgy
-        """
-        
-        for i,etf in enumerate(etfs):
-          #commend,s_qty = Strategy.Strategy.abs_momentum(etf=etfs[i],date=pivot_date)
-          commend,s_qty = Strategy.Strategy.abs_momentum2(etf=etfs[i],date=pivot_date)
-
-          if commend == 'SELL':
-            self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
-          elif commend == 'BUY':
-            self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
-          else:
-            pass
-
-        pivot_date = ETFUtils.get_next_date(pivot_date)
-
-      self.print_info()
+        Stratgy
+      """
       for i,etf in enumerate(etfs):
-        self.sell(etf=etf,date=_end_date.strftime('%Y-%m-%d'),qty=self.hold_qtys[etf.code])
-      self.print_info()
+        if what == 'dual_momentum':
+          commend,s_qty = Strategy.Strategy.dual_momentum(etf=etfs[i],date=pivot_date)
+        elif what == 'abs_momentum':
+          commend,s_qty = Strategy.Strategy.abs_momentum(etf=etfs[i],date=pivot_date)
+        else:
+          commend,s_qty = Strategy.Strategy.hold(etf=etfs[i])
+
+        if commend == 'SELL':
+          self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
+        elif commend == 'BUY':
+          self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
+        else:
+          pass
+
+      pivot_date = ETFUtils.get_next_date(pivot_date)
+
+    #self.print_info()
+    for i,etf in enumerate(etfs):
+      self.sell(etf=etf,date=_end_date.strftime('%Y-%m-%d'),qty=self.hold_qtys[etf.code])
+    self.print_info()
 
 
 if __name__ == '__main__':
-  portpolio_name = 'GTAA'
+  #portpolio_name = 'GTAA'
+  portpolio_name = 'GTAA-NON'
   portpolio = Portpolio(portpolio_name)
   capital = 10_000_000
 
 
   start_date  = '2019-10-02'
-  end_date = '2020-04-10'
-  sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date)
+  end_date = '2022-01-05'
+  sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum')
+  sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
   #sim = Simulation(portpolio=portpolio, capital=capital).print_info()
   
 
