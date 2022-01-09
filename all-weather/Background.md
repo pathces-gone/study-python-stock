@@ -61,4 +61,6 @@ Treasury bond (long-bond)
 * 2022-01-09
     * ~~buy-sell시 퍼센트로 계산~~
     * ~~buy-sell시 비율 지키면서 계산~~
-    * 건설주 상대모멘텀으로 돌려보기
+
+* 2022-01-10
+    * Max Drawdown (MDD) 계산 

@@ -7,7 +7,7 @@ from Portpolio import Portpolio
 import pandas as pd
 import Strategy
 
-
+LIMIT_RATIO = True
 PRINT_BUY_PORTPOLIO  = False
 PRINT_SELL_PORTPOLIO = False
 
@@ -46,9 +46,10 @@ class Simulation(object):
     buy_percent = (self.max_ratios[etf.code]*(percent/100))
     buy_qty = int(buy_percent*self.capital/100 / curr_price)
 
-
-    over = (self.avg_price[etf.code]*self.hold_qtys[etf.code] + buy_qty*curr_price)/(self.capital)*100
-
+    if LIMIT_RATIO:
+      over = (self.avg_price[etf.code]*self.hold_qtys[etf.code] + buy_qty*curr_price)/(self.capital)*100
+    else:
+      over = 0
     if (curr_price*buy_qty <= self.cash):
       if (over <= self.max_ratios[etf.code]):
         self.hold_qtys[etf.code]  = last_qty + buy_qty
@@ -92,6 +93,7 @@ class Simulation(object):
 
     """
     etfs,_ = self.portpolio.get_etf()
+    print('='*150)
     print('Portpoilo Info - %s'%self.portpolio.name)
     print("%20s | %30s %20s | %10s %10s %10s %10s %10s %10s"%('index','name','code', 'max(%)','ratio(%)', 'price', 'qty', 'buy', 'earn'))
     print('-'*150)
@@ -108,9 +110,9 @@ class Simulation(object):
       print("%20s | %s %20s | %10.2f %10.2f %10d %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,max_ratio,ratios, price, qty, value,earn) )
     print('-'*150)
     print('Total:')
-    print('\tbudget: %10d\n\t\tbuy: %10d\n\t\tcash: %10d  \n\n'%(self.budgets,total_buy,self.cash))
+    print('\tbudget: %10d\n\t\tbuy: %10d\n\t\tcash: %10d'%(self.budgets,total_buy,self.cash))
     print('\tcurr/budget=%12d/%12d [%4.2f%%]'%(total_buy+self.cash, self.budgets,(total_buy+self.cash)/self.budgets*100))
-    print('\n\n')
+    print('='*150)
 
 
   def buy_portpolio(self, date:str):
@@ -187,6 +189,10 @@ class Simulation(object):
     etfs,ratios = self.portpolio.get_etf()
     self.print_info()
 
+    max_capital = self.capital
+    min_capital = self.capital
+    max_draw_down = 0
+
     pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
     while(pivot_date < _end_date):
       """
@@ -207,36 +213,55 @@ class Simulation(object):
           self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=s_qty)
         else:
           pass
+        
+        # 모멘텀 사용시 MDD 
+        min_capital = self.capital if(self.capital<min_capital) else min_capital
+        max_capital = self.capital if(self.capital>=max_capital) else max_capital
+
         res_buy += self.hold_qtys[etf.code]*self.avg_price[etf.code]
       
+      # Trading Result
       self.capital = self.cash + res_buy
       for i,etf in enumerate(etfs):
         self.curr_ratios[etf.code] = (self.avg_price[etf.code]*self.hold_qtys[etf.code])/(self.capital)*100
-
+        
+        # Get - min/max : 수수료,세금계산해야함
+        ''' # hold시 mdd
+        self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=100)
+        min_capital = self.capital if(self.capital<min_capital) else min_capital
+        max_capital = self.capital if(self.capital>=max_capital) else max_capital
+        self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=100)
+        '''
+      # Next day
       pivot_date = ETFUtils.get_next_date(pivot_date)
+
 
     #self.print_info()
     for i,etf in enumerate(etfs):
-      self.sell(etf=etf,date=_end_date.strftime('%Y-%m-%d'),percent=self.hold_qtys[etf.code])
+      self.sell(etf=etf,date=_end_date.strftime('%Y-%m-%d'),percent=100)
+    max_draw_down = (min_capital-self.budgets)/self.budgets*100
     self.print_info()
-
+    print("Max:%10d\nMin:%10d\nMDD: %.2f[%%]"%(max_capital,min_capital,max_draw_down))
 
 if __name__ == '__main__':
   #portpolio_name = 'GTAA'
   #portpolio_name = 'GTAA-NON'
-  portpolio_name = 'AW'
+  #portpolio_name = 'AW'
+  portpolio_name = 'MyPortpolio'
+
   portpolio = Portpolio(portpolio_name)
   capital = 10_000_000
 
 
-  start_date  = '2019-04-02'
-  end_date = '2020-04-05'
+  start_date = '2019-08-02'
+  end_date = '2022-01-02'
   sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum')
-  #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
-  #sim = Simulation(portpolio=portpolio, capital=capital).print_info()
   
+  #print('\n'*5)
+  #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
+
 
   if 0:
     etfs,_ = portpolio.get_etf()
-    print(etfs[0])
     etfs[0].get_chart()
+    etfs[1].get_chart()

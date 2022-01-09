@@ -45,10 +45,10 @@ class Strategy(object):
     @staticmethod
     def abs_momentum(etf:ETF, date:str):
         """
-            모멘텀기준 12개월 전 가격 (추세추종 돌파매매)
+            모멘텀기준 3|6|9|12개월 전 가격 (추세추종 돌파매매)
             Trades/Year=1.2
         """
-        momentum = 90
+        momentum = 270
         close = etf.price_df[['Date','Close']]
         pivot = ETFUtils.get_prev_date(date,days=momentum)
 
