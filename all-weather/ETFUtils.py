@@ -69,3 +69,7 @@ def plot_candle_chart(price:DataFrame):
 def get_next_date(today:datetime)->datetime:
   next_date = today + datetime.timedelta(days=1)
   return next_date
+
+def get_prev_date(today:datetime, days:int)->datetime:
+  prev_date = today - datetime.timedelta(days=days)
+  return prev_date

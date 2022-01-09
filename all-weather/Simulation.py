@@ -17,10 +17,15 @@ class Simulation(object):
   """
   def __init__(self, portpolio:Portpolio, capital:int):
     self.portpolio = portpolio
+
+    self.budgets = capital
     self.capital = capital
     self.cash    = capital
 
-
+    # ETFs Data
+    self.max_ratios = dict()
+    self.curr_ratios = dict()
+    self.max_qty = dict()
     self.avg_price = dict()
     self.hold_qtys = dict()
     self.earn= dict()
@@ -40,13 +45,15 @@ class Simulation(object):
     add_qty = qty
     curr_price = etf.get_price(date=date)
 
-    if curr_price*add_qty <= self.cash:
+    if (curr_price*add_qty <= self.cash) and (self.curr_ratios[etf.code] <= self.max_ratios[etf.code]):
       self.hold_qtys[etf.code]  = last_qty + add_qty
       self.avg_price[etf.code] = (self.avg_price[etf.code]*last_qty+curr_price*add_qty)/self.hold_qtys[etf.code] if self.hold_qtys[etf.code] else 0
       self.cash -= curr_price*add_qty
       ret = True
     else:
       ret = False
+
+    self.curr_ratios[etf.code] = self.avg_price[etf.code]*self.hold_qtys[etf.code]/self.capital*100
     return ret
 
 
@@ -64,9 +71,13 @@ class Simulation(object):
       self.hold_qtys[etf.code]  = last_qty - sell_qty
       self.earn[etf.code] += (curr_price - self.avg_price[etf.code])*sell_qty
       self.cash += curr_price*sell_qty
+
+      self.capital = self.cash + self.avg_price[etf.code]*self.hold_qtys[etf.code]
       ret = True
     else:
       ret = False
+
+    self.curr_ratios[etf.code] = self.avg_price[etf.code]*self.hold_qtys[etf.code]/self.capital*100
     return ret    
 
 
@@ -77,22 +88,23 @@ class Simulation(object):
     """
     etfs,_ = self.portpolio.get_etf()
     print('Portpoilo Info - %s'%self.portpolio.name)
-    print("%20s | %30s %20s | %10s %10s %10s %10s %10s"%('index','name','code','ratio(%)', 'price', 'qty', 'buy', 'earn'))
-    print('-'*140)
+    print("%20s | %30s %20s | %10s %10s %10s %10s %10s %10s"%('index','name','code', 'max(%)','ratio(%)', 'price', 'qty', 'buy', 'earn'))
+    print('-'*150)
     total_buy = 0
     for i,etf in enumerate(etfs):
       qty   = self.hold_qtys[etf.code]
+      max_ratio = self.max_ratios[etf.code]
       price  = self.avg_price[etf.code]
       value = qty*price
-      ratios = (value/self.capital*100)
+      ratios = self.curr_ratios[etf.code]
       earn = self.earn[etf.code]
       total_buy += value
 
-      print("%20s | %s %20s | %10.2f %10d %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,ratios, price, qty, value,earn) )
-    print('-'*140)
+      print("%20s | %s %20s | %10.2f %10.2f %10d %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,max_ratio,ratios, price, qty, value,earn) )
+    print('-'*150)
     print('Total:')
     print('\tbudget: %10d\n\t\tbuy: %10d\n\t\tcash: %10d  \n\n'%(self.capital,total_buy,self.cash))
-    print('\tcurr/budget=%12d/%12d [%4.2f%%]'%(total_buy+self.cash, self.capital,(total_buy+self.cash)/self.capital*100))
+    print('\tcurr/budget=%12d/%12d [%4.2f%%]'%(total_buy+self.cash, self.budgets,(total_buy+self.cash)/self.budgets*100))
     print('\n\n')
 
 
@@ -107,6 +119,8 @@ class Simulation(object):
 
     qtys = np.array([],np.int32)
     for i,etf in enumerate(etfs):
+      self.max_ratios[etf.code] = ratios[i]
+      self.curr_ratios[etf.code]= ratios[i]
       qtys = np.append(qtys, int(budgets[i]/prices[i]))
 
     if PRINT_BUY_PORTPOLIO==True:
@@ -185,7 +199,8 @@ class Simulation(object):
         """
         
         for i,etf in enumerate(etfs):
-          commend,s_qty = Strategy.Strategy.abs_momentum(etf=etfs[i],date=pivot_date)
+          #commend,s_qty = Strategy.Strategy.abs_momentum(etf=etfs[i],date=pivot_date)
+          commend,s_qty = Strategy.Strategy.abs_momentum2(etf=etfs[i],date=pivot_date)
 
           if commend == 'SELL':
             self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
@@ -208,8 +223,8 @@ if __name__ == '__main__':
   capital = 10_000_000
 
 
-  start_date  = '2019-04-02'
-  end_date = '2021-04-03'
+  start_date  = '2019-10-02'
+  end_date = '2020-04-10'
   sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date)
   #sim = Simulation(portpolio=portpolio, capital=capital).print_info()
   
