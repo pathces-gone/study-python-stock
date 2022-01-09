@@ -27,8 +27,8 @@ class Strategy(object):
             v1 < v2 :SELL
             v2 < v1 :BUY
         """
-        SELL_QTY = 20
-        BUY_QTY = 10
+        SELL_QTY = 100
+        BUY_QTY = 100
 
         if v1 < v2:
             commend   = 'SELL'

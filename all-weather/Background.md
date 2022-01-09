@@ -59,6 +59,6 @@ Treasury bond (long-bond)
     * ~~date 넘기는 기능~~
 
 * 2022-01-09
-    * buy-sell시 퍼센트로 계산
+    * ~~buy-sell시 퍼센트로 계산~~
     * ~~buy-sell시 비율 지키면서 계산~~
     * 건설주 상대모멘텀으로 돌려보기

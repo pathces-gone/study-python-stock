@@ -1,0 +1,13 @@
+AW:
+  SPY:
+    - etf: '219480'
+      comment: 'KODEX 미국S&P500선물(H)'
+      ratio: 25
+  IEF:
+    - etf: '308620'
+      comment: 'KODEX 미국채10년선물'
+      ratio: 25
+  GOLD:
+    - etf: '132030' #'319640'
+      comment: 'KODEX 골드선물(H)' #'TIGER 골드선물(H)'
+      ratio: 25

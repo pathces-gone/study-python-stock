@@ -36,48 +36,53 @@ class Simulation(object):
       self.earn[etf.code] =0
 
 
-  def buy(self, etf:ETF, date:str ,qty:int=0):
+  def buy(self, etf:ETF, date:str, percent:float):
     """ Return
 
     """
     last_qty = self.hold_qtys[etf.code]
-
-    add_qty = qty
     curr_price = etf.get_price(date=date)
 
-    if (curr_price*add_qty <= self.cash) and (self.curr_ratios[etf.code] <= self.max_ratios[etf.code]):
-      self.hold_qtys[etf.code]  = last_qty + add_qty
-      self.avg_price[etf.code] = (self.avg_price[etf.code]*last_qty+curr_price*add_qty)/self.hold_qtys[etf.code] if self.hold_qtys[etf.code] else 0
-      self.cash -= curr_price*add_qty
-      ret = True
+    buy_percent = (self.max_ratios[etf.code]*(percent/100))
+    buy_qty = int(buy_percent*self.capital/100 / curr_price)
+
+
+    over = (self.avg_price[etf.code]*self.hold_qtys[etf.code] + buy_qty*curr_price)/(self.capital)*100
+
+    if (curr_price*buy_qty <= self.cash):
+      if (over <= self.max_ratios[etf.code]):
+        self.hold_qtys[etf.code]  = last_qty + buy_qty
+        self.avg_price[etf.code] = (self.avg_price[etf.code]*last_qty+curr_price*buy_qty)/self.hold_qtys[etf.code] if self.hold_qtys[etf.code] else 0
+        self.cash -= curr_price*buy_qty
+        ret = True
+      else:
+        ret=False
     else:
       ret = False
 
-    self.curr_ratios[etf.code] = self.avg_price[etf.code]*self.hold_qtys[etf.code]/self.capital*100
+    #self.curr_ratios[etf.code] = self.avg_price[etf.code]*self.hold_qtys[etf.code]/self.capital*100
     return ret
 
 
-  def sell(self, etf:ETF, date:str ,qty:int=0):
+  def sell(self, etf:ETF, date:str, percent:float):
     """ Return
 
     """
     last_qty = self.hold_qtys[etf.code]
     value    = self.earn[etf.code]
 
-    sell_qty = qty
     curr_price = etf.get_price(date=date)
-
+    sell_qty = self.hold_qtys[etf.code]*(percent/100)
+    
     if last_qty >= sell_qty:
       self.hold_qtys[etf.code]  = last_qty - sell_qty
       self.earn[etf.code] += (curr_price - self.avg_price[etf.code])*sell_qty
       self.cash += curr_price*sell_qty
-
-      self.capital = self.cash + self.avg_price[etf.code]*self.hold_qtys[etf.code]
+      #self.capital = self.cash + self.avg_price[etf.code]*self.hold_qtys[etf.code]
       ret = True
     else:
       ret = False
 
-    self.curr_ratios[etf.code] = self.avg_price[etf.code]*self.hold_qtys[etf.code]/self.capital*100
     return ret    
 
 
@@ -103,7 +108,7 @@ class Simulation(object):
       print("%20s | %s %20s | %10.2f %10.2f %10d %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,max_ratio,ratios, price, qty, value,earn) )
     print('-'*150)
     print('Total:')
-    print('\tbudget: %10d\n\t\tbuy: %10d\n\t\tcash: %10d  \n\n'%(self.capital,total_buy,self.cash))
+    print('\tbudget: %10d\n\t\tbuy: %10d\n\t\tcash: %10d  \n\n'%(self.budgets,total_buy,self.cash))
     print('\tcurr/budget=%12d/%12d [%4.2f%%]'%(total_buy+self.cash, self.budgets,(total_buy+self.cash)/self.budgets*100))
     print('\n\n')
 
@@ -129,7 +134,7 @@ class Simulation(object):
       print('-'*140)
       total_buy = 0
       for i,etf in enumerate(etfs):
-        self.buy(etf=etf, date=date, qty=qtys[i])
+        self.buy(etf=etf, date=date, percent=100)
         total_buy += prices[i]*qtys[i] 
         print("%20s | %s %20s | %10d %10.2f %10d %10d %10d"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,budgets[i],ratios[i],prices[i],qtys[i], prices[i]*qtys[i]) )
       print('-'*140)
@@ -137,7 +142,7 @@ class Simulation(object):
     else:
       total_buy = 0
       for i,etf in enumerate(etfs):
-        self.buy(etf=etf, date=date, qty=qtys[i])
+        self.buy(etf=etf, date=date, percent=100)
         total_buy +=  prices[i]*qtys[i]
 
     return [total_buy, prices, qtys]
@@ -156,7 +161,7 @@ class Simulation(object):
       print('-'*160)
       total_sell = 0
       for i,etf in enumerate(etfs):
-        self.sell(etf=etf, date=date, qty=buy_qtys[i])
+        self.sell(etf=etf, date=date, percent=100)
         total_sell +=  prices[i]*buy_qtys[i]
         earn_ratio = (prices[i]-buy_prices[i])/buy_prices[i]*buy_qtys[i]
         print("%20s | %s %20s | %10d %10.2f %15d %10d %10d %15.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,  buy_prices[i]*buy_qtys[i] ,ratios[i], prices[i], buy_qtys[i], prices[i]*buy_qtys[i], earn_ratio))
@@ -165,7 +170,7 @@ class Simulation(object):
     else:
       total_sell = 0
       for i,etf in enumerate(etfs):
-        self.sell(etf=etf, date=date, qty=buy_qtys[i])
+        self.sell(etf=etf, date=date, percent=100)
         total_sell +=  prices[i]*buy_qtys[i]
 
     return total_sell
@@ -180,13 +185,14 @@ class Simulation(object):
     total_buy, buy_prices, buy_qtys = self.buy_portpolio(date=start_date)
 
     etfs,ratios = self.portpolio.get_etf()
-    #self.print_info()
+    self.print_info()
 
     pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
     while(pivot_date < _end_date):
       """
         Stratgy
       """
+      res_buy=0
       for i,etf in enumerate(etfs):
         if what == 'dual_momentum':
           commend,s_qty = Strategy.Strategy.dual_momentum(etf=etfs[i],date=pivot_date)
@@ -196,31 +202,37 @@ class Simulation(object):
           commend,s_qty = Strategy.Strategy.hold(etf=etfs[i])
 
         if commend == 'SELL':
-          self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
+          self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=s_qty)
         elif commend == 'BUY':
-          self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),qty=s_qty)
+          self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=s_qty)
         else:
           pass
+        res_buy += self.hold_qtys[etf.code]*self.avg_price[etf.code]
+      
+      self.capital = self.cash + res_buy
+      for i,etf in enumerate(etfs):
+        self.curr_ratios[etf.code] = (self.avg_price[etf.code]*self.hold_qtys[etf.code])/(self.capital)*100
 
       pivot_date = ETFUtils.get_next_date(pivot_date)
 
     #self.print_info()
     for i,etf in enumerate(etfs):
-      self.sell(etf=etf,date=_end_date.strftime('%Y-%m-%d'),qty=self.hold_qtys[etf.code])
+      self.sell(etf=etf,date=_end_date.strftime('%Y-%m-%d'),percent=self.hold_qtys[etf.code])
     self.print_info()
 
 
 if __name__ == '__main__':
   #portpolio_name = 'GTAA'
-  portpolio_name = 'GTAA-NON'
+  #portpolio_name = 'GTAA-NON'
+  portpolio_name = 'AW'
   portpolio = Portpolio(portpolio_name)
   capital = 10_000_000
 
 
-  start_date  = '2019-10-02'
-  end_date = '2022-01-05'
+  start_date  = '2019-04-02'
+  end_date = '2020-04-05'
   sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum')
-  sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
+  #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
   #sim = Simulation(portpolio=portpolio, capital=capital).print_info()
   
 
