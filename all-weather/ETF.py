@@ -1,5 +1,4 @@
-import yaml
-import os, datetime, requests
+import yaml, os, datetime, requests
 import numpy as np
 import ETFUtils
 import pandas as pd
@@ -9,16 +8,17 @@ class ETF(object):
   """ Return ETF
     ETF object
   """
-  def __init__(self, name:str, code:str, index:str):
+  def __init__(self, name:str, code:str, index:str, src:str='NAVER'):
     self.name  = name
     self.code  = code
     self.index = index
+    self.src = src
     self.path = os.path.join('fsdata','%s.csv'%self.code)
 
     if os.path.exists(self.path):
       price_df = pd.read_csv(self.path)
     else:
-      price_df = ETFUtils.utils_get_price(code=self.code,page=100)
+      price_df = ETFUtils.utils_get_price(code=self.code,page=100,source=src)
       price_df.to_csv(self.path,encoding='utf-8')
 
     self.price_df = price_df
@@ -40,7 +40,23 @@ class ETF(object):
         if not cond_df.empty:
           price = cond_df['Close'].to_list()[0]
           break
-
     assert price!=0 ,"%s : %s , %s"%(self.name, self.code ,date)
-    return price
+    
+    ret = round(price,2)
+    return ret
 
+
+
+"""
+  LOCAL
+"""
+if __name__ == '__main__':
+  ticker = 'SPY'
+  spy = ETF(name=ticker, code=ticker, index=ticker, src='YAHOO')
+  price = spy.get_price(date='2020-01-10')
+  print(price)
+
+  ticker = '137610'
+  spy = ETF(name=ticker, code=ticker, index=ticker, src='NAVER')
+  price = spy.get_price(date='2020-01-10')
+  print(price)

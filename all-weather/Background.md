@@ -63,4 +63,5 @@ Treasury bond (long-bond)
     * ~~buy-sell시 비율 지키면서 계산~~
 
 * 2022-01-10
-    * Max Drawdown (MDD) 계산 
+    * ~~Max Drawdown (MDD) 계산~~
+    * ~~미국etf로 시뮬레이션돌리기 <= Backdata부족~~
