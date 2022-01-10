@@ -14,6 +14,7 @@ class Portpolio(object):
     self.name = name
     self.etfs = None
     self.ratios = None
+    self.sources = None
 
   @staticmethod
   def get_yaml(index:str)->list:
@@ -31,6 +32,7 @@ class Portpolio(object):
     etf_code = np.array([])
     cmds = np.array([], np.int32)
     ratios = np.array([], np.float32)
+    sources = np.array([])
 
     sub_portpolio = []
     sub_ratios = []
@@ -43,18 +45,19 @@ class Portpolio(object):
         etf_code   = np.append(etf_code, sub_label['etf'])  
         etf_name   = np.append(etf_name, sub_label['comment'])
         ratios = np.append(ratios,sub_label['ratio'])
+        sources = np.append(ratios,sub_label['source'])
         cmds = np.append(cmds, i)
 
     portpolio = []
     for i,etf in enumerate(etf_code):
       tmp = list(yaml[name].keys())
-      portpolio.append( ETF(name=etf_name[i], code=etf_code[i], index= tmp[cmds[i]]))
+      portpolio.append( ETF(name=etf_name[i], code=etf_code[i], index= tmp[cmds[i]],src=sources[i]))
     
     portpolio = [*portpolio, *sub_portpolio]
     ratios = [*ratios, *sub_ratios]
     assert np.sum(ratios) <= 100, ""
 
-    self.etf = copy.deepcopy(portpolio[0])
-    self.portpolio = copy.deepcopy(portpolio)
-
+    self.portpolio = portpolio
+    self.sources = sources
+  
     return [portpolio, ratios]

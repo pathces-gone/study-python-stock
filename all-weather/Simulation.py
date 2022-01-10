@@ -10,6 +10,9 @@ import Strategy
 LIMIT_RATIO = True
 PRINT_BUY_PORTPOLIO  = False
 PRINT_SELL_PORTPOLIO = False
+FORWARD_VALUE_ESTIMATE = 0#True
+
+
 
 class Simulation(object):
   """ Return Simulation
@@ -60,8 +63,6 @@ class Simulation(object):
         ret=False
     else:
       ret = False
-
-    #self.curr_ratios[etf.code] = self.avg_price[etf.code]*self.hold_qtys[etf.code]/self.capital*100
     return ret
 
 
@@ -79,7 +80,6 @@ class Simulation(object):
       self.hold_qtys[etf.code]  = last_qty - sell_qty
       self.earn[etf.code] += (curr_price - self.avg_price[etf.code])*sell_qty
       self.cash += curr_price*sell_qty
-      #self.capital = self.cash + self.avg_price[etf.code]*self.hold_qtys[etf.code]
       ret = True
     else:
       ret = False
@@ -185,53 +185,63 @@ class Simulation(object):
     _end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d")
 
     total_buy, buy_prices, buy_qtys = self.buy_portpolio(date=start_date)
-
     etfs,ratios = self.portpolio.get_etf()
     self.print_info()
 
     max_capital = self.capital
     min_capital = self.capital
     max_draw_down = 0
+    res_sell_all = 0
 
     pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
     while(pivot_date < _end_date):
       """
         Stratgy
-      """
+      """      
       res_buy=0
       for i,etf in enumerate(etfs):
         if what == 'dual_momentum':
           commend,s_qty = Strategy.Strategy.dual_momentum(etf=etfs[i],date=pivot_date)
         elif what == 'abs_momentum':
           commend,s_qty = Strategy.Strategy.abs_momentum(etf=etfs[i],date=pivot_date)
+        elif what == 'abs_momentum2':
+          commend,s_qty = Strategy.Strategy.abs_momentum2(etf=etfs[i],date=pivot_date)
         else:
           commend,s_qty = Strategy.Strategy.hold(etf=etfs[i])
 
+
+        arg_date = pivot_date.strftime('%Y-%m-%d')
         if commend == 'SELL':
-          self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=s_qty)
+          self.sell(etf=etfs[i],date=arg_date,percent=s_qty)
         elif commend == 'BUY':
-          self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=s_qty)
+          self.buy(etf=etfs[i],date=arg_date,percent=s_qty)
         else:
           pass
-        
-        # 모멘텀 사용시 MDD 
-        min_capital = self.capital if(self.capital<min_capital) else min_capital
-        max_capital = self.capital if(self.capital>=max_capital) else max_capital
 
-        res_buy += self.hold_qtys[etf.code]*self.avg_price[etf.code]
-      
+        if FORWARD_VALUE_ESTIMATE:
+          res_buy += self.hold_qtys[etf.code]*etf.get_price(date=arg_date) #trailing value
+        else:
+          res_buy += self.hold_qtys[etf.code]*self.avg_price[etf.code] #trailing value
+          res_sell_all += self.hold_qtys[etf.code]*etf.get_price(date=arg_date) 
       # Trading Result
       self.capital = self.cash + res_buy
+
+      if FORWARD_VALUE_ESTIMATE:
+        res_sell_all = self.capital
+      else:
+        res_sell_all = res_sell_all + self.cash
+    
       for i,etf in enumerate(etfs):
         self.curr_ratios[etf.code] = (self.avg_price[etf.code]*self.hold_qtys[etf.code])/(self.capital)*100
-        
-        # Get - min/max : 수수료,세금계산해야함
-        ''' # hold시 mdd
-        self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=100)
-        min_capital = self.capital if(self.capital<min_capital) else min_capital
-        max_capital = self.capital if(self.capital>=max_capital) else max_capital
-        self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=100)
-        '''
+
+      #  if 1: #what == 'hold':
+     #     #self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=100)
+      #    res_sell_all += self.hold_qtys[etf.code]*etf.get_price(date=arg_date)
+      #    #self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=100)
+
+      min_capital = res_sell_all if(res_sell_all<min_capital) else min_capital
+      max_capital = res_sell_all if(res_sell_all>=max_capital) else max_capital
+
       # Next day
       pivot_date = ETFUtils.get_next_date(pivot_date)
 
@@ -239,7 +249,10 @@ class Simulation(object):
     #self.print_info()
     for i,etf in enumerate(etfs):
       self.sell(etf=etf,date=_end_date.strftime('%Y-%m-%d'),percent=100)
+
+    # MDD
     max_draw_down = (min_capital-self.budgets)/self.budgets*100
+    
     self.print_info()
     print("Max:%10d\nMin:%10d\nMDD: %.2f[%%]"%(max_capital,min_capital,max_draw_down))
 
@@ -247,18 +260,20 @@ if __name__ == '__main__':
   #portpolio_name = 'GTAA'
   #portpolio_name = 'GTAA-NON'
   #portpolio_name = 'AW'
-  portpolio_name = 'MyPortpolio'
-
+  #portpolio_name = 'MyPortpolio'
+  portpolio_name = 'DANTE'
   portpolio = Portpolio(portpolio_name)
-  capital = 10_000_000
+  capital = 100_000
 
 
-  start_date = '2019-08-02'
-  end_date = '2022-01-02'
+  start_date = '2021-01-03'
+  end_date = '2022-01-06'
   sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum')
-  
+  #print('\n'*5)
+  #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum2')
   #print('\n'*5)
   #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
+
 
 
   if 0:

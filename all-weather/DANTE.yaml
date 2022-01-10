@@ -1,0 +1,36 @@
+DANTE:
+  'Globals':
+    - etf: 'VT'
+      source: 'YAHOO'
+      comment: '글로벌 주식'
+      ratio: 35
+  'Longbonds':
+    - etf: 'EDV'
+      source: 'YAHOO'
+      comment: '미국 장기채'
+      ratio: 20
+  'Inflation-linked':
+    - etf: 'LTPZ'
+      source: 'YAHOO'
+      comment: '미국 물가연동채'
+      ratio: 20
+  'Debenture':
+    - etf: 'VCLT'
+      source: 'YAHOO'
+      comment: '회사채'
+      ratio: 7.5
+  'Emerging':
+    - etf: 'VWOB'
+      source: 'YAHOO'
+      comment: '이머징마켓 채권'
+      ratio: 7.5
+  'Gold':
+    - etf: 'IAU'
+      source: 'YAHOO'
+      comment: '금'
+      ratio: 5
+  'Materials':
+    - etf: 'DBC' # 'BCI' #
+      source: 'YAHOO'
+      comment: '원자재'
+      ratio: 5

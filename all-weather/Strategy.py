@@ -48,7 +48,7 @@ class Strategy(object):
             모멘텀기준 3|6|9|12개월 전 가격 (추세추종 돌파매매)
             Trades/Year=1.2
         """
-        momentum = 270
+        momentum = 90#180
         close = etf.price_df[['Date','Close']]
         pivot = ETFUtils.get_prev_date(date,days=momentum)
 
@@ -59,9 +59,9 @@ class Strategy(object):
     @staticmethod
     def abs_momentum2(etf:ETF, date:str):
         """
-            300일 이동평균선
+            180일 이동평균선
         """
-        window_size =300
+        window_size =180
         
         close = etf.price_df[['Date','Close']]
         avg = close['Close'].rolling(window=window_size).mean()
