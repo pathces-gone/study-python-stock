@@ -70,7 +70,6 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
       html_table = get_html_table(pg_url)
       df = df.append(pd.read_html(html_table, header=0)[0], ignore_index=True)
     df = df.dropna(axis=0)
-
     assert df.empty == False, "the requested dataframe is empty."
 
     df = df.rename(columns= {'날짜': 'Date', '종가': 'Close', '전일비': 'Diff', '시가': 'Open', '고가': 'High', '저가': 'Low', '거래량': 'Volume'}) 
@@ -85,3 +84,11 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
     df_price = pdr.get_data_yahoo(ticker) # [Date, Open, High, Low, Close, Adj Close, Volume]
     ret = df_price.dropna(axis=0)
     return ret
+
+
+
+"""
+  LOCAL
+"""
+if __name__ == '__main__':
+  utils_get_price(code='261240', page=10, source='NAVER')

@@ -51,17 +51,25 @@ Treasury bond (long-bond)
 
 
 
+---
 ## To Do List
 
 * 2022-01-08
-    * ~~buy-sell 반복 시뮬레이션~~
-    * plot 기능
-    * ~~date 넘기는 기능~~
+  * ~~buy-sell 반복 시뮬레이션~~
+  * plot 기능
+  * ~~date 넘기는 기능~~
 
 * 2022-01-09
-    * ~~buy-sell시 퍼센트로 계산~~
-    * ~~buy-sell시 비율 지키면서 계산~~
+  * ~~buy-sell시 퍼센트로 계산~~
+  * ~~buy-sell시 비율 지키면서 계산~~
 
 * 2022-01-10
-    * ~~Max Drawdown (MDD) 계산~~
-    * ~~미국etf로 시뮬레이션돌리기 <= Backdata부족~~
+  * ~~Max Drawdown (MDD) 계산~~
+  * ~~미국etf로 시뮬레이션돌리기 <= Backdata부족~~
+
+* 2022-01-11
+  * ~~portpolio correation~~
+  * 환율 고려 달러/원변환
+  * 2018-02-05 to 2019-01-06 코스피 넣고 헷지되는거 찾기
+    * 신흥국지수 ETF로 correation 보고 Kospi 대체 (국내 데이터가 없음)
+  * momentum 전략 알고리즘 검증필요

@@ -48,7 +48,7 @@ class Portpolio(object):
         etf_code   = np.append(etf_code, sub_label['etf'])  
         etf_name   = np.append(etf_name, sub_label['comment'])
         ratios = np.append(ratios,sub_label['ratio'])
-        sources = np.append(ratios,sub_label['source'])
+        sources = np.append(sources,sub_label['source'])
         cmds = np.append(cmds, i)
 
     portpolio = []

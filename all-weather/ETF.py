@@ -18,7 +18,7 @@ class ETF(object):
     if os.path.exists(self.path):
       price_df = pd.read_csv(self.path)
     else:
-      price_df = ETFUtils.utils_get_price(code=self.code,page=100,source=src)
+      price_df = ETFUtils.utils_get_price(code=self.code,page=124,source=src)
       price_df.to_csv(self.path,encoding='utf-8')
 
     self.price_df = price_df
@@ -35,13 +35,13 @@ class ETF(object):
     else:
       next_date = datetime.datetime.strptime(date,"%Y-%m-%d")
       for retry in range(14):
-        next_date = next_date + datetime.timedelta(days=1)
+        next_date = ETFUtils.get_next_date(next_date);
         cond_df = price_df.loc[price_df['Date'] == next_date.strftime('%Y-%m-%d')]
         if not cond_df.empty:
           price = cond_df['Close'].to_list()[0]
           break
-    assert price!=0 ,"%s : %s , %s"%(self.name, self.code ,date)
-    
+    assert price!=0 , "%s : %s , %s"%(self.name, self.code ,next_date)
+      
     ret = round(price,2)
     return ret
 

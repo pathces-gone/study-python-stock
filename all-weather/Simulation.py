@@ -7,11 +7,10 @@ from Portpolio import Portpolio
 import pandas as pd
 import Strategy
 
-LIMIT_RATIO = True
 PRINT_BUY_PORTPOLIO  = False
 PRINT_SELL_PORTPOLIO = False
-FORWARD_VALUE_ESTIMATE = 0#True
-
+FORWARD_VALUE_ESTIMATE = True #  # FALSE - Has Bug
+LIMIT_RATIO = True
 
 
 class Simulation(object):
@@ -186,7 +185,7 @@ class Simulation(object):
 
     total_buy, buy_prices, buy_qtys = self.buy_portpolio(date=start_date)
     etfs,ratios = self.portpolio.get_etf()
-    self.print_info()
+    #self.print_info()
 
     max_capital = self.capital
     min_capital = self.capital
@@ -234,11 +233,6 @@ class Simulation(object):
       for i,etf in enumerate(etfs):
         self.curr_ratios[etf.code] = (self.avg_price[etf.code]*self.hold_qtys[etf.code])/(self.capital)*100
 
-      #  if 1: #what == 'hold':
-     #     #self.sell(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=100)
-      #    res_sell_all += self.hold_qtys[etf.code]*etf.get_price(date=arg_date)
-      #    #self.buy(etf=etfs[i],date=pivot_date.strftime('%Y-%m-%d'),percent=100)
-
       min_capital = res_sell_all if(res_sell_all<min_capital) else min_capital
       max_capital = res_sell_all if(res_sell_all>=max_capital) else max_capital
 
@@ -257,23 +251,30 @@ class Simulation(object):
     print("Max:%10d\nMin:%10d\nMDD: %.2f[%%]"%(max_capital,min_capital,max_draw_down))
 
 if __name__ == '__main__':
-  #portpolio_name = 'GTAA'
-  #portpolio_name = 'GTAA-NON'
-  #portpolio_name = 'AW'
-  #portpolio_name = 'MyPortpolio'
-  portpolio_name = 'DANTE'
-  portpolio = Portpolio(portpolio_name)
-  capital = 100_000
+  capital = 1_000_000
 
 
-  start_date = '2021-01-03'
-  end_date = '2022-01-06'
-  sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum')
-  #print('\n'*5)
-  #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum2')
-  #print('\n'*5)
-  #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
-
+  #start_date, end_date = ['2021-04-03', '2021-10-06']
+  #start_date, end_date = ['2021-04-03', '2021-12-06']
+  start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
+  if 0:
+    #portpolio_name = 'GTAA-NON'
+    #portpolio_name = 'AW'
+    #portpolio_name = 'MyPortpolio'
+    portpolio_name = 'DANTE'
+    portpolio = Portpolio(portpolio_name)
+    #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum')
+    #print('\n'*5)
+    #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum2')
+    #print('\n'*5)
+    #sim = Simulation(portpolio=portpolio_a, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
+  else:
+    portpolio_name_a = 'MyPortpolio'
+    portpolio_name_b = 'GTAA-H'
+    portpolio_a = Portpolio(portpolio_name_a)
+    portpolio_b = Portpolio(portpolio_name_b)
+    sim = Simulation(portpolio=portpolio_a, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
+    sim = Simulation(portpolio=portpolio_b, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
 
 
   if 0:

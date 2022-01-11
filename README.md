@@ -20,3 +20,9 @@
 ## Telegram Bot
 > [https://python-telegram-bot.org/](https://python-telegram-bot.org/)
 > [https://wikidocs.net/92180#_2](https://wikidocs.net/92180#_2)
+
+
+## NAVER
+code =
+page = 
+https://finance.naver.com/item/sise_day.nhn?code={code}}&page={page}
