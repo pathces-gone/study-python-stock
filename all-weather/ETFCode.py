@@ -34,6 +34,6 @@ class ETFTable(object):
 if __name__ == '__main__':
   etf = ETFTable()
   
-  n1 = '10년'
+  n1 = '200'
   c1 = etf.get_code(etf = n1)
   

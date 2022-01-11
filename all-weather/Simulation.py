@@ -190,6 +190,8 @@ class Simulation(object):
     max_capital = self.capital
     min_capital = self.capital
     max_draw_down = 0
+    sell_count = 0
+    buy_count = 0
     res_sell_all = 0
 
     pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
@@ -212,8 +214,10 @@ class Simulation(object):
         arg_date = pivot_date.strftime('%Y-%m-%d')
         if commend == 'SELL':
           self.sell(etf=etfs[i],date=arg_date,percent=s_qty)
+          sell_count += 1
         elif commend == 'BUY':
           self.buy(etf=etfs[i],date=arg_date,percent=s_qty)
+          buy_count += 1
         else:
           pass
 
@@ -249,6 +253,7 @@ class Simulation(object):
     
     self.print_info()
     print("Max:%10d\nMin:%10d\nMDD: %.2f[%%]"%(max_capital,min_capital,max_draw_down))
+    print('sell count: %d\nbuy count: %d'%(sell_count/len(etfs), buy_count/len(etfs)))
 
 if __name__ == '__main__':
   capital = 1_000_000
@@ -257,17 +262,17 @@ if __name__ == '__main__':
   #start_date, end_date = ['2021-04-03', '2021-10-06']
   #start_date, end_date = ['2021-04-03', '2021-12-06']
   start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
-  if 0:
+  if 1:
     #portpolio_name = 'GTAA-NON'
     #portpolio_name = 'AW'
     #portpolio_name = 'MyPortpolio'
-    portpolio_name = 'DANTE'
+    portpolio_name = 'CORR'
     portpolio = Portpolio(portpolio_name)
     #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum')
     #print('\n'*5)
-    #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum2')
+    sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum2')
     #print('\n'*5)
-    #sim = Simulation(portpolio=portpolio_a, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
+    #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
   else:
     portpolio_name_a = 'MyPortpolio'
     portpolio_name_b = 'GTAA-H'

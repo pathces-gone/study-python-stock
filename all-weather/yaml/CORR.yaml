@@ -1,0 +1,31 @@
+CORR:
+  'Globals':
+    - etf: 'VT'
+      source: 'YAHOO'
+      comment: '글로벌 주식'
+      ratio: 20
+  'Longbonds':
+    - etf: 'EDV'
+      source: 'YAHOO'
+      comment: '미국 장기채'
+      ratio: 20
+  'KOSPI200':
+    - etf: '069660'
+      comment: 'KODEX200'
+      source: 'NAVER'
+      ratio: 20
+  'KOSPI':
+    - etf: 'EWY'
+      source: 'YAHOO'
+      comment: 'MSCI South Korea ETF'
+      ratio: 10
+  'Gold':
+    - etf: 'IAU'
+      source: 'YAHOO'
+      comment: '금'
+      ratio: 15
+  'Materials':
+    - etf: 'DBC' # 'BCI' #
+      source: 'YAHOO'
+      comment: '원자재'
+      ratio: 15
