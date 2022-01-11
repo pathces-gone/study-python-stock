@@ -2,12 +2,15 @@ MyPortpolio:
   IEF:
     - etf: '308620'
       comment: 'KODEX 미국채10년선물'
+      source: 'NAVER'
       ratio: 25
   GOLD:
     - etf: '132030' #'319640'
       comment: 'KODEX 골드선물(H)' #'TIGER 골드선물(H)'
+      source: 'NAVER'
       ratio: 25
   KOSPI:
     - etf: '005930'
       comment: '삼성전자'
+      source: 'NAVER'
       ratio: 25

@@ -2,19 +2,24 @@ DBC:
   Energy:
     - etf: '130680'
       comment: 'TIGER 원유선물Enhanced(H)'
+      source: 'NAVER'
       ratio: 53
   Agriculture:
     - etf: '137610'
       comment: 'TIGER 농산물선물Enhanced(H)'
+      source: 'NAVER'
       ratio: 22
   Metal:
     - etf: '139310'
       comment: 'TIGER 금속선물(H)'
+      source: 'NAVER'
       ratio: 16
   RareMetal:
     - etf: '132030' #'319640'
       comment: 'KODEX 골드선물(H)' #'TIGER 골드선물(H)'
+      source: 'NAVER'
       ratio: 7
     - etf: '144600'
       comment: 'KODEX 은선물(H)'
+      source: 'NAVER'
       ratio: 2
