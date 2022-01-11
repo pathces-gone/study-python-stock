@@ -18,11 +18,10 @@ class Portpolio(object):
 
   @staticmethod
   def get_yaml(index:str)->list:
-    yaml_file_path = os.path.join(os.path.dirname(__file__))
+    yaml_file_path = os.path.join(os.path.dirname(__file__),'yaml')
     with open(os.path.join(yaml_file_path, '%s.yaml'%index)) as f:
       conf = yaml.load(f, Loader=yaml.FullLoader)
     return conf
-
 
   def get_etf(self):
     name = self.name
@@ -52,7 +51,7 @@ class Portpolio(object):
     for i,etf in enumerate(etf_code):
       tmp = list(yaml[name].keys())
       portpolio.append( ETF(name=etf_name[i], code=etf_code[i], index= tmp[cmds[i]],src=sources[i]))
-    
+      
     portpolio = [*portpolio, *sub_portpolio]
     ratios = [*ratios, *sub_ratios]
     assert np.sum(ratios) <= 100, ""
@@ -61,3 +60,4 @@ class Portpolio(object):
     self.sources = sources
   
     return [portpolio, ratios]
+
