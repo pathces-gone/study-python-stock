@@ -176,7 +176,6 @@ class Simulation(object):
 
     return total_sell
   
-
   def Run(self, start_date:str, end_date:str, what:str):
     """ Algorithm
       시작시간부터 하루하루 넘어가면서 simulation
@@ -213,11 +212,11 @@ class Simulation(object):
 
         arg_date = pivot_date.strftime('%Y-%m-%d')
         if commend == 'SELL':
-          self.sell(etf=etfs[i],date=arg_date,percent=s_qty)
-          sell_count += 1
+          if self.sell(etf=etfs[i],date=arg_date,percent=s_qty):
+            sell_count += 1
         elif commend == 'BUY':
-          self.buy(etf=etfs[i],date=arg_date,percent=s_qty)
-          buy_count += 1
+          if self.buy(etf=etfs[i],date=arg_date,percent=s_qty):
+            buy_count += 1
         else:
           pass
 
@@ -256,23 +255,24 @@ class Simulation(object):
     print('sell count: %d\nbuy count: %d'%(sell_count/len(etfs), buy_count/len(etfs)))
 
 if __name__ == '__main__':
-  capital = 1_000_000
+  capital = 100_000_000
 
 
   #start_date, end_date = ['2021-04-03', '2021-10-06']
-  #start_date, end_date = ['2021-04-03', '2021-12-06']
-  start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
+  start_date, end_date = ['2020-01-03', '2021-04-06']
+  #start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
   if 1:
     #portpolio_name = 'GTAA-NON'
     #portpolio_name = 'AW'
-    #portpolio_name = 'MyPortpolio'
-    portpolio_name = 'CORR'
+    portpolio_name = 'MyPortpolio'
+    #portpolio_name = 'CORR'
+    #portpolio_name = 'SingleStocks'
     portpolio = Portpolio(portpolio_name)
-    #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum')
+    sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum')
+    print('\n'*5)
+    #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum2')
     #print('\n'*5)
-    sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='abs_momentum2')
-    #print('\n'*5)
-    #sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
+    sim = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='hold')
   else:
     portpolio_name_a = 'MyPortpolio'
     portpolio_name_b = 'GTAA-H'

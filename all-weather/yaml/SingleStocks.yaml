@@ -1,0 +1,6 @@
+SingleStocks:
+  'SSE':
+    - etf: '005930'
+      comment: '삼성전자'
+      source: 'NAVER'
+      ratio: 100

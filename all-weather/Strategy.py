@@ -29,16 +29,21 @@ class Strategy(object):
         """
         SELL_QTY = 100
         BUY_QTY = 100
+        THRESHOLD_SELL, THRESHOLD_BUY = [0.0, 0.0]
 
+
+        commend = 'HOLD'
+        update_qty= 0
         if v1 < v2:
+          if (v2-v1)/v2 > THRESHOLD_SELL:
             commend   = 'SELL'
             update_qty= SELL_QTY
         elif v1 >= v2:
+          if (v1-v2)/v2 > THRESHOLD_BUY:
             commend   = 'BUY'
             update_qty= BUY_QTY
         else:
-            commend = 'HOLD'
-            update_qty= 0
+          pass
 
         return [commend, update_qty]
 
