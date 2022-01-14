@@ -119,8 +119,8 @@ if __name__ == '__main__':
   #po = Portpolio('CORR')
   po = Portpolio('CORR')
 
-  start_date, end_date, _ = ['2018-02-05', '2022-01-11','']
-  #start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
+  #start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
+  start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
   corr_df = po.get_correlation(start_date=start_date, end_date=end_date)
 
   if 1:

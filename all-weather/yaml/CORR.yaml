@@ -30,7 +30,12 @@ CORR:
       comment: '원자재'
       ratio: 10
   'CUR':
-    - etf: '261240'
-      comment: 'KODEX 미국달러선물'
+    - etf: 'UUP'
+      comment: '달러인덱스'
+      source: 'YAHOO'
+      ratio: 10
+  'SSG':
+    - etf: '005930'
+      comment: '삼성전자'
       source: 'NAVER'
       ratio: 10

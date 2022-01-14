@@ -6,7 +6,7 @@ import ETFUtils
 
 class Strategy(object):
     @staticmethod
-    def retry(df,date):
+    def retry(df,date:datetime):
         """ Return [v1,date]
 
         """
@@ -48,7 +48,7 @@ class Strategy(object):
         return [commend, update_qty]
 
     @staticmethod
-    def abs_momentum(etf:ETF, date:str):
+    def abs_momentum(etf:ETF, date:datetime):
         """
             모멘텀기준 3|6|9|12개월 전 가격 (추세추종 돌파매매)
             Trades/Year=1.2
@@ -62,7 +62,7 @@ class Strategy(object):
         return Strategy.compare(v1=v1,v2=v2)
 
     @staticmethod
-    def abs_momentum2(etf:ETF, date:str):
+    def abs_momentum2(etf:ETF, date:datetime):
         """
             180일 이동평균선
         """
@@ -91,3 +91,20 @@ class Strategy(object):
         commend   = 'HOLD'
         update_qty= 0
         return [commend, update_qty]
+
+    @staticmethod
+    def reblance(etf:ETF, date:datetime):
+      """ Return
+          4-1,  11-1 2회 리밸런싱
+        TODO
+      """
+      if (date.month==4) & (date.day==1):
+        commend   = 'REBLANCE'
+        update_qty= 0
+        pass
+      elif (date.month==11) & (date.day==1):
+        commend   = 'REBLANCE'
+        update_qty= 0
+      else:
+        commend   = 'HOLD'
+        update_qty= 0

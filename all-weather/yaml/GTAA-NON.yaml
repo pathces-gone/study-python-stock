@@ -1,17 +1,26 @@
 GTAA-NON:
+  SPY:
+    - etf: 'SPY'
+      source: 'YAHOO'
+      comment: 'SPY'
+      ratio: 20
   IEF:
-    - etf: '308620'
-      comment: 'KODEX 미국채10년선물'
-      source: 'NAVER'
-      ratio: 40
+    - etf: 'IEF'
+      source: 'YAHOO'
+      comment: '미국 장기채'
+      ratio: 20
   VNQ:
-    - etf: '182480'
-      comment: 'TIGER 미국MSCI리츠(합성 H)'
-      source: 'NAVER'
-      ratio: 30
+    - etf: 'VNQ'
+      source: 'YAHOO'
+      comment: '미국리츠'
+      ratio: 20
   DBC:
-    - etf: '/DBC'
-      comment: 'DBC.yaml'
-      source: 'NAVER'
-      ratio: 30
-
+    - etf: 'DBC'
+      source: 'YAHOO'
+      comment: '원자재'
+      ratio: 20
+  VGK:
+    - etf: 'VGK'
+      source: 'YAHOO'
+      comment: '유럽지수'
+      ratio: 20
