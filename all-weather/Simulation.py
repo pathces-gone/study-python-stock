@@ -1,4 +1,5 @@
 from audioop import avg
+from matplotlib.pyplot import draw
 import yaml
 import os, datetime, requests
 import numpy as np
@@ -7,6 +8,7 @@ from ETF import ETF
 from Portpolio import Portpolio
 import pandas as pd
 import Strategy
+
 PRINT_BUY_PORTPOLIO  = False#False #True
 PRINT_SELL_PORTPOLIO = False #False
 FORWARD_VALUE_ESTIMATE = True #  # FALSE - Has Bug
@@ -17,8 +19,9 @@ class Simulation(object):
   """ Return Simulation
     Simulation Root node of Portpolio (ETF chain)
   """
-  def __init__(self, portpolio:Portpolio, capital:int):
+  def __init__(self, portpolio:Portpolio, capital:int, report_name:str):
     self.portpolio = portpolio
+    self.report_name = os.path.join('sim-result',report_name+'.png')
 
     self.init_budgets = capital
     self.budgets = capital # constant init value
@@ -72,19 +75,19 @@ class Simulation(object):
     """ Return [update_hold_qtys, update_earn, update_cash]
 
     """
-    last_qty = self.hold_qtys[etf.code]
-    value    = self.earn[etf.code]
+    last_qty  = int(self.hold_qtys[etf.code])
+    last_earn = self.earn[etf.code]
 
     curr_price = etf.get_price(date=date)
-    sell_qty = self.hold_qtys[etf.code]*(percent/100)
-
+    sell_qty = int(self.hold_qtys[etf.code]*(percent/100))
+    #print(last_qty,sell_qty)
     if last_qty >= sell_qty:
       update_hold_qtys = last_qty - sell_qty
-      update_earn = value + (curr_price - self.avg_price[etf.code])*sell_qty
+      update_earn = (curr_price - self.avg_price[etf.code])*sell_qty
       update_cash = self.cash + curr_price*sell_qty
       ret = [update_hold_qtys, update_earn, update_cash]
     else:
-      ret = [last_qty, value, self.cash]
+      ret = [last_qty, last_earn, self.cash]
     return ret    
 
 
@@ -202,12 +205,11 @@ class Simulation(object):
     etfs,ratios = self.portpolio.get_etf()
     #self.print_info()
 
-    max_capital = self.capital
-    min_capital = self.capital
     max_draw_down = 0
 
     debug_mmd = np.array([])
-    
+    debug_capital = np.array([])
+
     pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
     while(pivot_date < dt_end_date):
       """
@@ -215,28 +217,26 @@ class Simulation(object):
       """
       if what=='AW4/11':
         if ((pivot_date.month==4) & (pivot_date.day==1)) | ((pivot_date.month==11) & (pivot_date.day==1)):
+          last_capital = self.capital
+
           # Reblancing
           total_sell = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
-          last_capital =  self.capital
           earn_ratio = round((total_sell-last_capital)/last_capital*100,2)
-          _ = self.buy_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
           self.capital = total_sell
-
-
-          min_capital = total_sell if(total_sell<=min_capital) else min_capital
-          max_capital = total_sell if(total_sell>=max_capital) else max_capital
+          _ = self.buy_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
 
           # MDD
-          if min_capital < last_capital:
-            max_draw_down = (last_capital-min_capital)/last_capital*100
-            print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
-          else:
-            print(pivot_date,'%10d --> %10d  %4.2f[%%]'%(last_capital,total_sell, earn_ratio))
+          earn = 0
+          for k,v in self.earn.items():
+            earn += v
+          draw_down = (earn)/last_capital*100
 
+          max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
+          print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
+  
           # Init MDD
-          min_capital  = self.capital
-          max_capital  = self.capital
           max_draw_down= 0
+
           # Next Date
           pivot_date = ETFUtils.get_next_date(pivot_date)
           continue
@@ -245,25 +245,19 @@ class Simulation(object):
           """
             MDD
           """
-          res_sell = 0
+          temp_earn = 0
           for i,etf in enumerate(etfs):
             update_hold_qtys, update_earn, update_cash = self.sell(etf=etf, date=pivot_date.strftime('%Y-%m-%d'), percent=100)
-            res_sell += update_cash - self.cash 
-
-          min_capital = res_sell if ((res_sell>0) & (res_sell<min_capital)) else min_capital
-          max_capital = res_sell if ((res_sell>0) & (res_sell>max_capital)) else max_capital
+            temp_earn += update_earn
 
           last_capital = self.capital
-          max_draw_down = (last_capital-min_capital)/last_capital*100 
+          draw_down = (temp_earn)/last_capital*100
+
+          max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
+
           debug_mmd = np.append(debug_mmd,round(max_draw_down,2))
-
-        # Init MDD
-        min_capital  = last_capital
-        max_capital  = last_capital
-        max_draw_down = 0
-
-
-
+          debug_capital = np.append(debug_capital,round(last_capital+temp_earn,2))
+          
       """
         Next date
       """
@@ -276,18 +270,24 @@ class Simulation(object):
       last_capital = self.capital
       total_sell = self.sell_portpolio(date=end_date)
       earn_ratio = round((total_sell-last_capital)/last_capital*100,2)
-      max_draw_down = (min_capital-last_capital)/last_capital*100
       print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
-    #self.print_info()
+      self.print_info()
 
-    import matplotlib.pyplot as plt
+    if 1:
+      ## Report
+      import matplotlib.pyplot as plt
+      fig = plt.figure(figsize=(10,10))
+      ax1 = fig.add_subplot(2,1,1)
+      ax2 = fig.add_subplot(2,1,2)
+      ax1.plot(range(len(debug_mmd)),debug_mmd , label = 'mmd(%)')
+      ax2.plot(range(len(debug_capital)),debug_capital, label = 'capital')    
+      ax2.legend()
+      ax1.legend()
 
-    plt.plot(range(len(debug_mmd)),debug_mmd)
+      plt.savefig(self.report_name)
+      plt.show()
 
     return total_sell
-
-
-
 
 
 
@@ -299,21 +299,14 @@ if __name__ == '__main__':
   capital = start_capital
 
   #start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
-  #start_date, end_date = ['2013-11-02', '2022-01-02']
-
-  #start_date, end_date = ['2006-11-02', '2016-11-02']
-  start_date, end_date = ['2008-11-02', '2010-11-02']
-
-  if 1:
-    portpolio_name = 'GTAA-NON'
-    #portpolio_name = 'AW'
-    #portpolio_name = 'DANTE'
-    #portpolio_name = 'CORR' 
-    #portpolio_name = 'SingleStocks'
-    portpolio = Portpolio(portpolio_name)
-    capital = Simulation(portpolio=portpolio, capital=capital).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-
   if 0:
-    etfs,_ = portpolio.get_etf()
-    etfs[0].get_chart()
-    etfs[1].get_chart()
+    portpolio_name = 'GTAA-NON'
+    start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
+    portpolio = Portpolio(portpolio_name)
+    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=portpolio_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+  
+  if 1:
+    portpolio_name = 'DANTE'
+    start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
+    portpolio = Portpolio(portpolio_name)    
+    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=portpolio_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
