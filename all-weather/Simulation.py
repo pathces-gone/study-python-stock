@@ -9,10 +9,11 @@ from Portpolio import Portpolio
 import pandas as pd
 import Strategy
 
+
+PRINT_TRADE_LOG = False
 PRINT_BUY_PORTPOLIO  = False#False #True
 PRINT_SELL_PORTPOLIO = False #False
-FORWARD_VALUE_ESTIMATE = True #  # FALSE - Has Bug
-LIMIT_RATIO = True
+LIMIT_RATIO = True # ??
 
 
 class Simulation(object):
@@ -21,8 +22,11 @@ class Simulation(object):
   """
   def __init__(self, portpolio:Portpolio, capital:int, report_name:str):
     self.portpolio = portpolio
-    self.report_name = os.path.join('sim-result',report_name+'.png')
-
+    if report_name != None:
+      self.report_name = os.path.join('sim-result',report_name+'.png')
+      self.do_save = True
+    else:
+      self.do_save = False
     self.init_budgets = capital
     self.budgets = capital # constant init value
     self.capital = capital # reblanced value
@@ -232,7 +236,9 @@ class Simulation(object):
           draw_down = (earn)/last_capital*100
 
           max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
-          print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
+
+          if PRINT_TRADE_LOG:
+            print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
   
           # Init MDD
           max_draw_down= 0
@@ -241,7 +247,6 @@ class Simulation(object):
           pivot_date = ETFUtils.get_next_date(pivot_date)
           continue
         else:
-
           """
             MDD
           """
@@ -255,9 +260,23 @@ class Simulation(object):
 
           max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
 
+        
+          """
+            Cut-off
+          """
+          if DO_CUT_OFF:
+            if max_draw_down < -10:
+              if PRINT_TRADE_LOG:
+                print(pivot_date,'Cut-off!!   mmd: %2.2f%%'%max_draw_down)
+              total_sell = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
+              self.capital = total_sell
+              max_draw_down = 0
+
+
           debug_mmd = np.append(debug_mmd,round(max_draw_down,2))
           debug_capital = np.append(debug_capital,round(last_capital+temp_earn,2))
-          
+        
+
       """
         Next date
       """
@@ -284,12 +303,11 @@ class Simulation(object):
       ax2.legend()
       ax1.legend()
 
-      plt.savefig(self.report_name)
+      if self.do_save:
+        plt.savefig(self.report_name)
       plt.show()
 
     return total_sell
-
-
 
 
 
@@ -300,13 +318,48 @@ if __name__ == '__main__':
 
   #start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
   if 0:
+    DO_CUT_OFF = 1
     portpolio_name = 'GTAA-NON'
     start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
     portpolio = Portpolio(portpolio_name)
-    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=portpolio_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+    report_name = portpolio_name + '_cutoff10'
+    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
   
   if 1:
+  
+    PRINT_TRADE_LOG = True
+    DO_CUT_OFF = 0
+    portpolio_name = 'DANTE'
+    #start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
+
+
+    start_date, end_date,_ = ['2014-11-02', '2019-11-02','단테 올웨더']
+
+    portpolio = Portpolio(portpolio_name)
+    #report_name = portpolio_name + '_cutoff10'
+    report_name = None   
+    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+
+  if 0:
+    DO_CUT_OFF = 1
     portpolio_name = 'DANTE'
     start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
-    portpolio = Portpolio(portpolio_name)    
-    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=portpolio_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+    portpolio = Portpolio(portpolio_name)
+
+
+    import datetime
+    import random
+
+    def random_date(start, end):
+      start_date = datetime.datetime.strptime(start,"%Y-%m-%d")
+      end_date = datetime.datetime.strptime(end,"%Y-%m-%d")
+      day_range = int((end_date - start_date).total_seconds()/3600/24)
+
+      ret = start_date + datetime.timedelta(days=random.randint(0, day_range))
+      ret = ret.strftime('%Y-%m-%d')
+      return ret
+
+    for i in range(10):
+      start_date = random_date('2014-01-01','2018-12-31')
+      print('\n\n',start_date)
+      sim2 = Simulation(portpolio=portpolio, capital=capital,report_name='').Run(start_date= start_date, end_date= end_date, what='AW4/11')
