@@ -56,9 +56,9 @@ class Simulation(object):
     if avg_price == 0:
       avg_price = curr_price
 
-    trade_date = trade_date.strftime('%Y-%m-%d')
+    trade_date_str = trade_date.strftime('%Y-%m-%d')
     if etf.src == 'YAHOO':
-      usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date,'Close'].to_list()[0]
+      usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
     else:
       usd_krw = 1.0
 
@@ -93,9 +93,9 @@ class Simulation(object):
     curr_price, trade_date = etf.get_price(date=date)
     sell_qty = int(self.hold_qtys[etf.code]*(percent/100))
 
-    trade_date = trade_date.strftime('%Y-%m-%d')
+    trade_date_str = trade_date.strftime('%Y-%m-%d')
     if etf.src == 'YAHOO':
-      usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date,'Close'].to_list()[0]
+      usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
     else:
       usd_krw = 1.0
 
@@ -177,8 +177,7 @@ class Simulation(object):
         self.cash = update_cash
         total_buy += update_hold_qtys*update_avg_price
 
-
-      return total_buy
+      return total_buy,trade_date
 
 
 
@@ -213,7 +212,7 @@ class Simulation(object):
         self.earn[etf.code] = update_earn
         self.cash = update_cash
       total_sell = self.cash
-    return total_sell
+    return total_sell,trade_date
 
 
   def Run(self, start_date:str, end_date:str, what:str):
@@ -230,9 +229,10 @@ class Simulation(object):
     cutoff_flag = not DO_CUT_OFF
     debug_mmd = np.array([])
     debug_capital = np.array([])
+    debug_date= np.array([])
 
     pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
-    while(pivot_date < dt_end_date):
+    while(pivot_date <= dt_end_date):
       """
       =========================================================================
                               Strategy Start 
@@ -243,7 +243,7 @@ class Simulation(object):
           last_capital = self.capital
 
           # Reblancing
-          total_sell = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
+          total_sell,trade_date = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
           earn_ratio = round((total_sell-last_capital)/last_capital*100,2)
           self.capital = total_sell
           _ = self.buy_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
@@ -264,8 +264,12 @@ class Simulation(object):
           """
           debug_mmd = np.append(debug_mmd,round(max_draw_down,2))
           debug_capital = np.append(debug_capital,round(last_capital+temp_earn,2))
+          debug_date =  np.append(debug_date,trade_date.strftime('%Y-%m-%d'))
           max_draw_down= 0
           cutoff_flag = False
+
+          if trade_date != pivot_date:
+            pivot_date = trade_date
           pivot_date = ETFUtils.get_next_date(pivot_date)
           continue
 
@@ -319,7 +323,7 @@ class Simulation(object):
         if (max_draw_down < -10) & (cutoff_flag==False):
           if PRINT_TRADE_LOG:
             print(pivot_date,'Cut-off!!   mmd: %2.2f%%'%max_draw_down)
-          total_sell = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
+          total_sell, trade_date = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
           self.capital = total_sell
           cutoff_flag = True
 
@@ -328,6 +332,9 @@ class Simulation(object):
       """
       debug_mmd = np.append(debug_mmd,round(max_draw_down,2))
       debug_capital = np.append(debug_capital,round(last_capital+temp_earn,2))
+      debug_date =  np.append(debug_date,trade_date.strftime('%Y-%m-%d'))
+      if trade_date != pivot_date:
+        pivot_date = trade_date
       pivot_date = ETFUtils.get_next_date(pivot_date)
 
 
@@ -339,7 +346,7 @@ class Simulation(object):
         Sell All at the end date
       """
       last_capital = self.capital
-      total_sell = self.sell_portpolio(date=end_date)
+      total_sell, trade_date = self.sell_portpolio(date=end_date)
       earn_ratio = round((total_sell-last_capital)/last_capital*100,2)
       print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
       self.print_info()
@@ -348,18 +355,32 @@ class Simulation(object):
       """
         Report
       """
+
       import matplotlib.pyplot as plt
-      fig = plt.figure(figsize=(10,10))
-      ax1 = fig.add_subplot(2,1,1)
-      ax2 = fig.add_subplot(2,1,2)
-      ax1.plot(range(len(debug_mmd)),debug_mmd , label = 'mmd(%)')
-      ax2.plot(range(len(debug_capital)),debug_capital, label = 'capital')    
-      ax2.legend()
+      df_usd_krw = self.portpolio.usd_krw.loc[ 
+        (self.portpolio.usd_krw['Date'] >= start_date) & (self.portpolio.usd_krw['Date'] <= end_date),
+        :]
+      fig = plt.figure(figsize=(15,10))
+      ax1 = fig.add_subplot(3,1,1)
+      ax2 = fig.add_subplot(3,1,2)
+      ax3 = fig.add_subplot(3,1,3)
+
+      ax1.plot(debug_date, debug_mmd , label = 'mmd(%)')
+      ax2.plot(debug_date, debug_capital, label = 'capital')
+      ax3.plot(df_usd_krw['Date'],df_usd_krw['Close'], label='usd-krw')
+
+
+      plt.xticks(np.arange(0, len(df_usd_krw['Date'])+1, 30), rotation=45)
+
+
       ax1.legend()
+      ax2.legend()
+      ax3.legend()
+      plt.grid()
 
       if self.do_save:
         plt.savefig(self.report_name)
-      plt.show()
+      #plt.show()
 
     return total_sell
 
@@ -370,7 +391,8 @@ if __name__ == '__main__':
   start_capital_krw =  100_000_000 
   capital = start_capital_krw
 
-  #start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
+  start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
+
   if 0:
     DO_CUT_OFF = 1
     portpolio_name = 'GTAA-NON'
@@ -383,9 +405,9 @@ if __name__ == '__main__':
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'DANTE'
-    start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
+   # start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
     #start_date, end_date,_ = ['2014-11-02', '2019-11-02','단테 올웨더']
-    #start_date, end_date, _ = ['2021-03-05', '2022-01-13', 'kospi양적긴축폭락장']
+    start_date, end_date, _ = ['2019-11-05', '2022-01-13', 'kospi양적긴축폭락장']
     portpolio = Portpolio(portpolio_name)
     #report_name = portpolio_name + '_cutoff10'
     #report_name = portpolio_name+'1720'

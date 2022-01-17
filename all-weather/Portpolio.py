@@ -1,3 +1,4 @@
+from re import X
 import yaml
 import os, datetime, requests
 import numpy as np
@@ -119,6 +120,19 @@ class Portpolio(object):
               )  
     plt.show()
 
+
+  def get_usd_krw(self,start_date:str,end_date:str,interval:int=90):
+    """ Return 
+      usd-krw graph
+    """
+    import matplotlib.dates as mdates
+    df = self.usd_krw.loc[ (self.usd_krw['Date'] >= start_date) & (self.usd_krw['Date'] <= end_date),:]
+    fig, ax = plt.subplots(figsize=(10, 7))
+    ax.plot(df['Date'], df['Close'])
+    plt.xticks(np.arange(0, len(df['Date'])+1, interval), rotation=45)
+    plt.grid()
+    plt.show()
+
 """
   LOCAL
 """
@@ -133,7 +147,8 @@ if __name__ == '__main__':
       po.get_corr_plot(corr_df)
   else:
     po = Portpolio('SingleStocks')
-    usd = po.usd_krw
+    po.get_usd_krw('2013-01-04', '2022-01-04',180)
 
-    p = usd.loc[ usd['Date']=='2021-03-05' ,'Close'].to_list()[0]
-    print(p)
+#    usd = po.usd_krw
+    #p = usd.loc[ usd['Date']=='2021-03-05' ,'Close'].to_list()[0]
+   # print(p)
