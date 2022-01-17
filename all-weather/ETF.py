@@ -30,10 +30,10 @@ class ETF(object):
   def get_price(self, date:str):
     price_df = self.price_df
     price = 0
+    next_date = datetime.datetime.strptime(date,"%Y-%m-%d")
     if not price_df.loc[price_df['Date'] == date].empty:
       price = price_df.loc[price_df['Date'] == date]['Close'].to_list()[0]
     else:
-      next_date = datetime.datetime.strptime(date,"%Y-%m-%d")
       for retry in range(14):
         next_date = ETFUtils.get_next_date(next_date);
         cond_df = price_df.loc[price_df['Date'] == next_date.strftime('%Y-%m-%d')]
@@ -43,7 +43,7 @@ class ETF(object):
     assert price!=0 , "%s : %s , %s"%(self.name, self.code ,next_date)
       
     ret = round(price,2)
-    return ret
+    return ret, next_date
 
 
 

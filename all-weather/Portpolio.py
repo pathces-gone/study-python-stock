@@ -9,7 +9,7 @@ import copy
 import matplotlib.pyplot as plt
 import seaborn as sns
 import platform
-
+import FinanceDataReader as fdr #pip3 install --user finance-datareader
 
 class Portpolio(object):
   """ Return Portpolio
@@ -19,6 +19,13 @@ class Portpolio(object):
     self.name = name
     self.sources = None
     self.portpolio = None
+
+    usd_krw_path = os.path.join('fsdata','usd_krw.csv')
+    if os.path.exists(usd_krw_path):
+      self.usd_krw = pd.read_csv(usd_krw_path)
+    else:
+      self.usd_krw = fdr.DataReader('USD/KRW')
+      self.usd_krw.to_csv(usd_krw_path,encoding='utf-8')
 
   @staticmethod
   def get_yaml(index:str)->list:
@@ -116,12 +123,17 @@ class Portpolio(object):
   LOCAL
 """
 if __name__ == '__main__':
-  #po = Portpolio('CORR')
-  po = Portpolio('CORR')
+  if 0:
+    po = Portpolio('CORR')
+    #start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
+    start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
+    corr_df = po.get_correlation(start_date=start_date, end_date=end_date)
 
-  #start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
-  start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
-  corr_df = po.get_correlation(start_date=start_date, end_date=end_date)
+    if 1:
+      po.get_corr_plot(corr_df)
+  else:
+    po = Portpolio('SingleStocks')
+    usd = po.usd_krw
 
-  if 1:
-    po.get_corr_plot(corr_df)
+    p = usd.loc[ usd['Date']=='2021-03-05' ,'Close'].to_list()[0]
+    print(p)
