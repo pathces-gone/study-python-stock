@@ -80,4 +80,5 @@ Treasury bond (long-bond)
 
 * 2022-01-16
   * report pdf 생성
-  * random일에 매수 했을 때 mmd 시뮬레이션
+  * ~~random일에 매수 했을 때 mmd 시뮬레이션~~
+  * 환율연동 매수매도
