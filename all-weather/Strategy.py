@@ -27,25 +27,18 @@ class Strategy(object):
             v1 < v2 :SELL
             v2 < v1 :BUY
         """
-        SELL_QTY = 100
-        BUY_QTY = 100
         THRESHOLD_SELL, THRESHOLD_BUY = [0.0, 0.0]
 
-
-        commend = 'HOLD'
-        update_qty= 0
+        commend = 'BUY'
         if v1 < v2:
           if (v2-v1)/v2 > THRESHOLD_SELL:
             commend   = 'SELL'
-            update_qty= SELL_QTY
         elif v1 >= v2:
-          if (v1-v2)/v2 > THRESHOLD_BUY:
+          if (v1-v2)/v2 >= THRESHOLD_BUY:
             commend   = 'BUY'
-            update_qty= BUY_QTY
         else:
           pass
-
-        return [commend, update_qty]
+        return commend
 
     @staticmethod
     def abs_momentum(etf:ETF, date:datetime):
@@ -64,20 +57,18 @@ class Strategy(object):
     @staticmethod
     def abs_momentum2(etf:ETF, date:datetime):
         """
-            180일 이동평균선
+          Todo: Portpolio를 받아서 etf의 순위를 매김 Top3 & 12개월 이평선 위의 종목 매수?
         """
-        window_size =180
-        
-        close = etf.price_df[['Date','Close']]
-        avg = close['Close'].rolling(window=window_size).mean()
-        close = close.assign(avg=avg.values)
+        window_size =224
+        mavg  = etf.get_mavg(criteria='Low', window=window_size)
+        close = etf.price_df[['Date', 'Close']]
+        close = close.assign(mavg=mavg.values)
 
-        today = date.strftime('%Y-%m-%d')
-        index = close.loc[close['Date'] == today]
+        #today = date.strftime('%Y-%m-%d')
+        index = close.loc[close['Date'] == date]
 
         v1 = index['Close'].values
-        v2 = index['avg'].values
-
+        v2 = index['mavg'].values
         return Strategy.compare(v1=v1,v2=v2)
 
     @staticmethod
@@ -85,26 +76,3 @@ class Strategy(object):
         commend   = 'SELL'
         update_qty= 10
         return [commend, update_qty]
-
-    @staticmethod
-    def hold(etf:ETF):
-        commend   = 'HOLD'
-        update_qty= 0
-        return [commend, update_qty]
-
-    @staticmethod
-    def reblance(etf:ETF, date:datetime):
-      """ Return
-          4-1,  11-1 2회 리밸런싱
-        TODO
-      """
-      if (date.month==4) & (date.day==1):
-        commend   = 'REBLANCE'
-        update_qty= 0
-        pass
-      elif (date.month==11) & (date.day==1):
-        commend   = 'REBLANCE'
-        update_qty= 0
-      else:
-        commend   = 'HOLD'
-        update_qty= 0

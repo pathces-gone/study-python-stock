@@ -125,7 +125,6 @@ class Portpolio(object):
     """ Return 
       usd-krw graph
     """
-    import matplotlib.dates as mdates
     df = self.usd_krw.loc[ (self.usd_krw['Date'] >= start_date) & (self.usd_krw['Date'] <= end_date),:]
     fig, ax = plt.subplots(figsize=(10, 7))
     ax.plot(df['Date'], df['Close'])
@@ -137,10 +136,11 @@ class Portpolio(object):
   LOCAL
 """
 if __name__ == '__main__':
-  if 0:
-    po = Portpolio('CORR')
-    #start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
-    start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
+  if 1:
+    po = Portpolio('CORR2')
+    start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
+    #start_date, end_date, _ = ['2021-12-05', '2022-01-17','']
+    #start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
     corr_df = po.get_correlation(start_date=start_date, end_date=end_date)
 
     if 1:

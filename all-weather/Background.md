@@ -56,7 +56,6 @@ Treasury bond (long-bond)
 
 * 2022-01-08
   * ~~buy-sell 반복 시뮬레이션~~
-  * plot 기능
   * ~~date 넘기는 기능~~
 
 * 2022-01-09
@@ -69,10 +68,8 @@ Treasury bond (long-bond)
 
 * 2022-01-11
   * ~~portpolio correation~~
-  * 환율 고려 달러/원변환
   * 2018-02-05 to 2019-01-06 코스피 넣고 헷지되는거 찾기
     * 신흥국지수 ETF로 correation 보고 Kospi 대체 (국내 데이터가 없음)
-  * momentum 전략 알고리즘 검증필요
 
 * 2022-01-12
   * ~~trade/year = 2인 리벨런싱 함수 만들기~~
@@ -81,4 +78,11 @@ Treasury bond (long-bond)
 * 2022-01-16
   * report pdf 생성
   * ~~random일에 매수 했을 때 mmd 시뮬레이션~~
-  * 환율연동 매수매도
+  * ~~환율연동 매수매도~~
+
+* 2022-01-18
+  * 현금일 경우 예적금 금리반영
+  * 외환시장과 미장/국장 date가 다름 => plot시 고려해야함
+  * CAGR로 결과 계산
+  * AW4/11 vs B&H plotting
+  * 이평선추가 

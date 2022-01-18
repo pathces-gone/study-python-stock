@@ -1,0 +1,11 @@
+CORR2:
+  'SSG':
+    - etf: '005930'
+      comment: '삼성전자'
+      source: 'NAVER'
+      ratio: 10
+  'KOSPI200':
+    - etf: '069660'
+      comment: 'KODEX200'
+      source: 'NAVER'
+      ratio: 10

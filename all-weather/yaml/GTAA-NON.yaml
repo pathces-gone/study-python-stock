@@ -1,4 +1,6 @@
 GTAA-NON:
+  # “Global Tactical Asset Allocation” or “GTAA”. GTAA consists of five global asset
+  # classes: US stocks, foreign stocks, bonds, real estate and commodities.
   SPY:
     - etf: 'SPY'
       source: 'YAHOO'

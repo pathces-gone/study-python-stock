@@ -23,6 +23,14 @@ class ETF(object):
 
     self.price_df = price_df
 
+  def get_mavg(self, criteria:str, window:int):
+    """ Return Dataframe
+      criteria = 'Low', 'High', 'Open', 'Close', 'Value'
+    """
+    price_low = self.price_df.loc[:,criteria]
+    mavg  = price_low.rolling(window=window).mean()
+    return mavg
+
   def get_chart(self):
     #assert self.price_df != None,"price_df is None"
     ETFUtils.plot_candle_chart(self.price_df)

@@ -73,7 +73,7 @@ class Simulation(object):
     if (curr_price_krw*buy_qty <= self.cash):
       if (over <= self.max_ratios[etf.code]):
         update_hold_qtys = last_qty + buy_qty
-        update_avg_price = (avg_price*last_qty+curr_price_krw*buy_qty)/update_hold_qtys
+        update_avg_price = (avg_price*last_qty+curr_price_krw*buy_qty)/update_hold_qtys if update_hold_qtys else 0
         update_cash = self.cash - curr_price_krw*buy_qty
         ret = [update_hold_qtys, update_avg_price, update_cash,trade_date]
       else:
@@ -211,7 +211,7 @@ class Simulation(object):
         self.hold_qtys[etf.code] = update_hold_qtys
         self.earn[etf.code] = update_earn
         self.cash = update_cash
-      total_sell = self.cash
+        total_sell = self.cash
     return total_sell,trade_date
 
 
@@ -288,7 +288,7 @@ class Simulation(object):
           max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
 
 
-      elif what=='AWHold':
+      elif what=='B&H':
         """
           MDD
         """
@@ -301,12 +301,35 @@ class Simulation(object):
         draw_down = (temp_earn)/last_capital*100
 
         max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
-
       elif what == 'AbsMomentum':
         """
-          
+      
         """
         pass
+      elif what == 'RelativeMomentum':
+        """
+          <Relative Strength Strategies for Investing>
+            * This portfolio begins with the asset classes listed in the GTAA Moderate allocation.
+            * selects the top six out of the thirteen assets as ranked by an average of 1, 3, 6, and
+              12-month total returns (momentum).
+                1. US Large-cap value - 5%
+                2. US Large-cap Momentum - 5%
+                3. US Small-cap value - 5%
+                4. US Small-cap Momentum - 5%
+                5. Foreign Developed - 10%
+                6. Foreign Emerging  - 10%
+                7. US 10 Year Goverment Bonds  - 5%
+                8. Foreign 10 Year Goverment Bonds  - 5%
+                9. US Corporate Bonds  - 5%
+                10. US 30 Year Goverment Bonds  - 5%
+                11. Commodities(Index)  - 10%
+                12. Commodities(Gold)   - 10%
+                12. Real Estate Investment Trusts - 20%
+            * The assets are only included if they are above their long-term moving average, 
+            otherwise that portion of the portfolio is moved to cash.
+        """
+        pass
+
       elif what == 'DualMomentum':
         pass
       else:
@@ -365,8 +388,10 @@ class Simulation(object):
       ax2 = fig.add_subplot(3,1,2)
       ax3 = fig.add_subplot(3,1,3)
 
-      ax1.plot(debug_date, debug_mmd , label = 'mmd(%)')
-      ax2.plot(debug_date, debug_capital, label = 'capital')
+      #ax1.plot(debug_date, debug_mmd , label = 'mmd(%)')
+      #ax2.plot(debug_date, debug_capital, label = 'capital')
+      ax1.plot(range(len(debug_mmd)), debug_mmd , label = 'mmd(%)')
+      ax2.plot(range(len(debug_mmd)), debug_capital, label = 'capital')
       ax3.plot(df_usd_krw['Date'],df_usd_krw['Close'], label='usd-krw')
 
 
@@ -388,15 +413,17 @@ class Simulation(object):
 
 if __name__ == '__main__':
 
-  start_capital_krw =  100_000_000 
+  start_capital_krw =  10_000_000 
   capital = start_capital_krw
 
   start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
 
   if 0:
-    DO_CUT_OFF = 1
-    portpolio_name = 'GTAA-NON'
-    start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
+    PRINT_TRADE_LOG = True
+    DO_CUT_OFF = 0
+    portpolio_name = 'GTAA'
+    start_date, end_date,_ = ['2019-11-02', '2021-11-02','gtaa-non']
+    #start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
     portpolio = Portpolio(portpolio_name)
     report_name = portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
@@ -405,38 +432,15 @@ if __name__ == '__main__':
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'DANTE'
-   # start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
-    #start_date, end_date,_ = ['2014-11-02', '2019-11-02','단테 올웨더']
-    start_date, end_date, _ = ['2019-11-05', '2022-01-13', 'kospi양적긴축폭락장']
+    #start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
+
+    start_date, end_date, _ = ['2018-01-01', '2019-01-04', 'kospi양적긴축폭락장']
     portpolio = Portpolio(portpolio_name)
     #report_name = portpolio_name + '_cutoff10'
     #report_name = portpolio_name+'1720'
     report_name = None
     sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
     #sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AWHold')
-
-  if 0:
-    DO_CUT_OFF = 1
-    portpolio_name = 'DANTE'
-    start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
-    portpolio = Portpolio(portpolio_name)
-
-    import datetime
-    import random
-
-    def random_date(start, end):
-      start_date = datetime.datetime.strptime(start,"%Y-%m-%d")
-      end_date = datetime.datetime.strptime(end,"%Y-%m-%d")
-      day_range = int((end_date - start_date).total_seconds()/3600/24)
-
-      ret = start_date + datetime.timedelta(days=random.randint(0, day_range))
-      ret = ret.strftime('%Y-%m-%d')
-      return ret
-
-    for i in range(10):
-      start_date = random_date('2014-01-01','2018-12-31')
-      print('\n\n',start_date)
-      sim2 = Simulation(portpolio=portpolio, capital=capital,report_name='').Run(start_date= start_date, end_date= end_date, what='AW4/11')
 
   if 0:
     DO_CUT_OFF = 0
