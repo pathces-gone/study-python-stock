@@ -221,7 +221,7 @@ class Simulation(object):
     """
     dt_end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d")
 
-    total_buy = self.buy_portpolio(date=start_date)
+    total_buy, trade_date = self.buy_portpolio(date=start_date)
     etfs,ratios = self.portpolio.get_etf()
     self.print_info()
 
@@ -230,6 +230,9 @@ class Simulation(object):
     debug_mmd = np.array([])
     debug_capital = np.array([])
     debug_date= np.array([])
+
+    count =0
+    additional_paid_in = 8_000_000
 
     pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
     while(pivot_date <= dt_end_date):
@@ -240,11 +243,14 @@ class Simulation(object):
       """
       if what=='AW4/11':
         if ((pivot_date.month==4) & (pivot_date.day==1)) | ((pivot_date.month==11) & (pivot_date.day==1)):
-          last_capital = self.capital
+          count += 1
+          self.cash += additional_paid_in
+          last_capital = self.capital + additional_paid_in
 
           # Reblancing
           total_sell,trade_date = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
           earn_ratio = round((total_sell-last_capital)/last_capital*100,2)
+
           self.capital = total_sell
           _ = self.buy_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
 
@@ -257,7 +263,7 @@ class Simulation(object):
           max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
 
           if PRINT_TRADE_LOG:
-            print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
+            print(trade_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
 
           """
             Next date
@@ -268,8 +274,8 @@ class Simulation(object):
           max_draw_down= 0
           cutoff_flag = False
 
-          if trade_date != pivot_date:
-            pivot_date = trade_date
+          # if trade_date != pivot_date:
+          #   pivot_date = trade_date
           pivot_date = ETFUtils.get_next_date(pivot_date)
           continue
 
@@ -356,8 +362,6 @@ class Simulation(object):
       debug_mmd = np.append(debug_mmd,round(max_draw_down,2))
       debug_capital = np.append(debug_capital,round(last_capital+temp_earn,2))
       debug_date =  np.append(debug_date,trade_date.strftime('%Y-%m-%d'))
-      if trade_date != pivot_date:
-        pivot_date = trade_date
       pivot_date = ETFUtils.get_next_date(pivot_date)
 
 
@@ -372,6 +376,8 @@ class Simulation(object):
       total_sell, trade_date = self.sell_portpolio(date=end_date)
       earn_ratio = round((total_sell-last_capital)/last_capital*100,2)
       print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
+
+      self.budgets += count*additional_paid_in
       self.print_info()
 
     if 1:
@@ -426,12 +432,12 @@ if __name__ == '__main__':
     report_name = portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
   
-  if 0:
+  if 1:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'DANTE'
-    #start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
-    start_date, end_date,_ =  ['2021-12-02', '2022-01-18','']
+    start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
+    #start_date, end_date,_ =  ['2021-12-02', '2022-01-18','']
 
     portpolio = Portpolio(portpolio_name)
     #report_name = portpolio_name + '_cutoff10'
@@ -440,12 +446,11 @@ if __name__ == '__main__':
     sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
     #sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AWHold')
   
-  if 1:
+  if 0:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'MyPortpolio'
-    #start_date, end_date,_ = ['2021-12-02', '2022-01-18','']
-    start_date, end_date,_ = ['2022-01-14', '2022-01-18','']
+    start_date, end_date,_ = ['2019-12-02', '2022-01-18','']
     portpolio = Portpolio(portpolio_name)
     #report_name = portpolio_name+'1720'
     report_name = None
