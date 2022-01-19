@@ -86,3 +86,4 @@ Treasury bond (long-bond)
   * CAGR로 결과 계산
   * AW4/11 vs B&H plotting
   * 이평선추가 
+  * 포트폴리오별 correation 측정

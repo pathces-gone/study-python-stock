@@ -378,7 +378,6 @@ class Simulation(object):
       """
         Report
       """
-
       import matplotlib.pyplot as plt
       df_usd_krw = self.portpolio.usd_krw.loc[ 
         (self.portpolio.usd_krw['Date'] >= start_date) & (self.portpolio.usd_krw['Date'] <= end_date),
@@ -397,7 +396,6 @@ class Simulation(object):
 
       plt.xticks(np.arange(0, len(df_usd_krw['Date'])+1, 30), rotation=45)
 
-
       ax1.legend()
       ax2.legend()
       ax3.legend()
@@ -413,7 +411,7 @@ class Simulation(object):
 
 if __name__ == '__main__':
 
-  start_capital_krw =  10_000_000 
+  start_capital_krw =  6_000_000 
   capital = start_capital_krw
 
   start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
@@ -428,26 +426,27 @@ if __name__ == '__main__':
     report_name = portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
   
-  if 1:
+  if 0:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'DANTE'
     #start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
+    start_date, end_date,_ =  ['2021-12-02', '2022-01-18','']
 
-    start_date, end_date, _ = ['2018-01-01', '2019-01-04', 'kospi양적긴축폭락장']
     portpolio = Portpolio(portpolio_name)
     #report_name = portpolio_name + '_cutoff10'
     #report_name = portpolio_name+'1720'
     report_name = None
     sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
     #sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AWHold')
-
-  if 0:
-    DO_CUT_OFF = 0
-    portpolio_name = 'SingleStocks'
-    #start_date, end_date,_ = ['2006-11-02', '2022-01-02','SingleStocks']
-    start_date, end_date,_ = ['2015-01-17', '2022-01-02','SingleStocks']
-    portpolio = Portpolio(portpolio_name)
-    report_name = None
-    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AWHold')
   
+  if 1:
+    PRINT_TRADE_LOG = True
+    DO_CUT_OFF = 0
+    portpolio_name = 'MyPortpolio'
+    #start_date, end_date,_ = ['2021-12-02', '2022-01-18','']
+    start_date, end_date,_ = ['2022-01-14', '2022-01-18','']
+    portpolio = Portpolio(portpolio_name)
+    #report_name = portpolio_name+'1720'
+    report_name = None
+    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
