@@ -68,8 +68,8 @@ Treasury bond (long-bond)
 
 * 2022-01-11
   * ~~portpolio correation~~
-  * 2018-02-05 to 2019-01-06 코스피 넣고 헷지되는거 찾기
-    * 신흥국지수 ETF로 correation 보고 Kospi 대체 (국내 데이터가 없음)
+  * ~~2018-02-05 to 2019-01-06 코스피 넣고 헷지되는거 찾기~~
+    ~~* 신흥국지수 ETF로 correation 보고 Kospi 대체 (국내 데이터가 없음)~~
 
 * 2022-01-12
   * ~~trade/year = 2인 리벨런싱 함수 만들기~~
@@ -81,9 +81,11 @@ Treasury bond (long-bond)
   * ~~환율연동 매수매도~~
 
 * 2022-01-18
-  * 현금일 경우 예적금 금리반영
-  * 외환시장과 미장/국장 date가 다름 => plot시 고려해야함
-  * CAGR로 결과 계산
-  * AW4/11 vs B&H plotting
+  * ~~현금일 경우 예적금 금리반영~~ 
+    * cma금리 연 1.20% :  (cash*(1.012)/365) * days = 이자로 계산
+    * https://www.shinhaninvest.com/siw/wealth-management/cma/cma-simulation/view.do
+  * ~~외환시장과 미장/국장 date가 다름 => plot시 고려해야함~~
+  * ~~CAGR로 결과 계산~~
+  * ~~AW4/11 vs B&H plotting~~
   * 이평선추가 
   * 포트폴리오별 correation 측정

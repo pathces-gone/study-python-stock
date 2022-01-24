@@ -219,22 +219,45 @@ class Simulation(object):
     """ Algorithm
       시작시간부터 하루하루 넘어가면서 MDD계산
     """
+    dt_start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
     dt_end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d")
 
-    total_buy, trade_date = self.buy_portpolio(date=start_date)
-    etfs,ratios = self.portpolio.get_etf()
-    self.print_info()
-
-    max_draw_down = 0
-    cutoff_flag = not DO_CUT_OFF
+    """
+      plot array
+    """
     debug_mmd = np.array([])
     debug_capital = np.array([])
     debug_date= np.array([])
 
+    """
+    =========================================================================
+                          Trading Conditions 
+    ========================================================================= 
+    """
+    cutoff_flag = not DO_CUT_OFF
+    max_draw_down = 0
     count =0
-    additional_paid_in = 8_000_000
+    additional_paid_in = 0 #8_000_000
 
-    pivot_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
+    pivot_date = dt_start_date
+
+    last_reblance_day = pivot_date
+    if what=='AW4/11':
+      AW_4  = datetime.datetime.strptime('2000-04-30',"%Y-%m-%d") 
+      AW_11 = datetime.datetime.strptime('2000-11-30',"%Y-%m-%d")
+      s_year = pivot_date.year
+      s_year_4 = 0
+      s_year_11 = 0
+
+    """
+    =========================================================================
+                          Trading Start 
+    ========================================================================= 
+    """
+    total_buy, trade_date = self.buy_portpolio(date=start_date)
+    etfs,ratios = self.portpolio.get_etf()
+    #self.print_info()
+
     while(pivot_date <= dt_end_date):
       """
       =========================================================================
@@ -242,7 +265,25 @@ class Simulation(object):
       ========================================================================= 
       """
       if what=='AW4/11':
-        if ((pivot_date.month==4) & (pivot_date.day==1)) | ((pivot_date.month==11) & (pivot_date.day==1)):
+        if s_year != pivot_date.year:
+          s_year =  pivot_date.year
+          s_year_4 = 0
+          s_year_11 = 0
+
+        AW_4_  = ((trade_date-AW_4).days  - (trade_date.year-AW_4.year)*365) + 1
+        AW_11_ = ((trade_date-AW_11).days - (trade_date.year-AW_11.year)*365) + 1
+
+        if((s_year_4==0 and (0<=AW_4_<3)) | (s_year_11==0 and(0<=AW_11_<3))):
+          s_year_4 = (4> AW_4_ >= 0)
+          s_year_11= (4>AW_11_ >= 0)
+
+          if 1: # cma 이자
+            cma_days = (pivot_date-last_reblance_day).days
+            cma=(self.cash*(0.012)/365) * cma_days
+            #print('이자: %d -> %d [%d]'%(self.cash,cma,cma_days))
+            self.cash += cma
+            last_reblance_day = pivot_date
+
           count += 1
           self.cash += additional_paid_in
           last_capital = self.capital + additional_paid_in
@@ -274,9 +315,10 @@ class Simulation(object):
           max_draw_down= 0
           cutoff_flag = False
 
-          # if trade_date != pivot_date:
-          #   pivot_date = trade_date
-          pivot_date = ETFUtils.get_next_date(pivot_date)
+          if pivot_date == trade_date:
+            pivot_date = ETFUtils.get_next_date(pivot_date)
+          else:
+            pivot_date = ETFUtils.get_next_date(trade_date)
           continue
 
         else:
@@ -295,18 +337,19 @@ class Simulation(object):
 
 
       elif what=='B&H':
-        """
-          MDD
-        """
-        temp_earn = 0
-        for i,etf in enumerate(etfs):
-          update_hold_qtys, update_earn, update_cash, _, _ = self.sell(etf=etf, date=pivot_date.strftime('%Y-%m-%d'), percent=100)
-          temp_earn += update_earn
+          """
+            MDD
+          """
+          temp_earn = 0
+          for i,etf in enumerate(etfs):
+            update_hold_qtys, update_earn, update_cash, trade_date = self.sell(etf=etf, date=pivot_date.strftime('%Y-%m-%d'), percent=100)
+            temp_earn += update_earn
 
-        last_capital = self.capital
-        draw_down = (temp_earn)/last_capital*100
+          last_capital = self.capital
+          draw_down = (temp_earn)/last_capital*100
 
-        max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
+          max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
+
       elif what == 'AbsMomentum':
         """
       
@@ -339,11 +382,13 @@ class Simulation(object):
       elif what == 'DualMomentum':
         pass
       else:
-        """
-        =========================================================================
-                                Strategy end 
-        ========================================================================= 
-        """
+        pass
+
+      """
+      =========================================================================
+                              Strategy end 
+      ========================================================================= 
+      """
 
       """
         Cut-off
@@ -362,8 +407,17 @@ class Simulation(object):
       debug_mmd = np.append(debug_mmd,round(max_draw_down,2))
       debug_capital = np.append(debug_capital,round(last_capital+temp_earn,2))
       debug_date =  np.append(debug_date,trade_date.strftime('%Y-%m-%d'))
-      pivot_date = ETFUtils.get_next_date(pivot_date)
 
+      if pivot_date == trade_date:
+        pivot_date = ETFUtils.get_next_date(pivot_date)
+      else:
+        pivot_date = ETFUtils.get_next_date(trade_date)
+
+    """
+    =========================================================================
+                            Trading end 
+    ========================================================================= 
+    """
 
     """
       Result
@@ -380,6 +434,10 @@ class Simulation(object):
       self.budgets += count*additional_paid_in
       self.print_info()
 
+      if 1: # CAGR
+        cagr = (self.capital/self.budgets)**(1/int((dt_end_date-dt_start_date).days/365))
+        cagr = round((cagr-1)*100,2)
+        print("CAGR= %3.2f [%%]"%cagr)
     if 1:
       """
         Report
@@ -432,7 +490,7 @@ if __name__ == '__main__':
     report_name = portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
   
-  if 1:
+  if 0:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'DANTE'
@@ -446,12 +504,14 @@ if __name__ == '__main__':
     sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
     #sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AWHold')
   
-  if 0:
+  if 1:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'MyPortpolio'
-    start_date, end_date,_ = ['2019-12-02', '2022-01-18','']
+    start_date, end_date,_ = ['2020-01-18', '2022-01-21','']
     portpolio = Portpolio(portpolio_name)
     #report_name = portpolio_name+'1720'
     report_name = None
-    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+
+    #sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='B&H')
