@@ -1,5 +1,5 @@
 from audioop import avg
-from matplotlib.pyplot import draw
+from matplotlib.pyplot import draw, figure
 import yaml
 import os, datetime, requests
 import numpy as np
@@ -446,7 +446,7 @@ class Simulation(object):
           cagr = (self.capital/self.budgets)**(1/int((dt_end_date-dt_start_date).days/365))
           cagr = round((cagr-1)*100,2)
           print("CAGR= %3.2f [%%]"%cagr)
-    if 0:
+    if 1:
       """
         Report
       """
@@ -477,7 +477,7 @@ class Simulation(object):
         plt.savefig(self.report_name)
       plt.show()
 
-    return [debug_mmd,debug_capital,debug_date]
+    return [portpolio_name,debug_mmd,debug_capital,debug_date]
 
 
 
@@ -487,8 +487,8 @@ class Simulation(object):
 
 class SimulationReview(Simulation):
   def __init__(self, sim1:list, sim2:list):
-    sim1_mmd, sim1_capital, sim1_date = sim1
-    sim2_mmd, sim2_capital, sim2_date = sim2
+    sim1_name, sim1_mmd, sim1_capital, sim1_date = sim1
+    sim2_name, sim2_mmd, sim2_capital, sim2_date = sim2
     assert sim1_date[0] == sim2_date[0],''
     assert sim2_date[-1] == sim2_date[-1],''
 
@@ -513,8 +513,9 @@ class SimulationReview(Simulation):
     self.raw_df = raw_df
 
     import matplotlib.pyplot as plt
-    plt.plot(sim1_capital,label='sim1')
-    plt.plot(sim2_capital,label='sim2')
+    plt.figure(figsize=(10,5))
+    plt.plot(sim1_capital,label=sim1_name)
+    plt.plot(sim2_capital,label=sim2_name)
     plt.legend()
 
 
@@ -557,11 +558,12 @@ if __name__ == '__main__':
     report_name = portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
   
-  if 0:
+  if 1:
+    FIXED_EXCHANGE_RATE = False
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     report_name = None
-    start_date, end_date,_ = ['2020-01-04', '2020-04-24','']
+    start_date, end_date,_ = ['2021-11-04', '2022-01-24','']
 
     portpolio_name = 'DANTE'
     portpolio = Portpolio(portpolio_name)
@@ -573,12 +575,12 @@ if __name__ == '__main__':
 
     SimulationReview(sim1=sim1, sim2=sim2).get_correlation()
 
-  if 1:
-    FIXED_EXCHANGE_RATE = True
+  if 0:
+    FIXED_EXCHANGE_RATE = False
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     report_name = None
-    start_date, end_date,_ = ['2020-01-04', '2020-04-24','']
+    start_date, end_date,_ = ['2021-01-04', '2022-01-24','']
 
     portpolio_name = 'DBC'
     portpolio = Portpolio(portpolio_name)
