@@ -435,10 +435,11 @@ class Simulation(object):
       self.print_info()
 
       if 1: # CAGR
-        cagr = (self.capital/self.budgets)**(1/int((dt_end_date-dt_start_date).days/365))
-        cagr = round((cagr-1)*100,2)
-        print("CAGR= %3.2f [%%]"%cagr)
-    if 1:
+        if int((dt_end_date-dt_start_date).days/365) > 0:
+          cagr = (self.capital/self.budgets)**(1/int((dt_end_date-dt_start_date).days/365))
+          cagr = round((cagr-1)*100,2)
+          print("CAGR= %3.2f [%%]"%cagr)
+    if 0:
       """
         Report
       """
@@ -467,12 +468,74 @@ class Simulation(object):
 
       if self.do_save:
         plt.savefig(self.report_name)
-      #plt.show()
+      plt.show()
 
-    return total_sell
+    return [debug_mmd,debug_capital,debug_date]
 
 
 
+
+
+
+
+class SimulationReview(Simulation):
+  def __init__(self, sim1:list, sim2:list):
+    sim1_mmd, sim1_capital, sim1_date = sim1
+    sim2_mmd, sim2_capital, sim2_date = sim2
+    assert sim1_date[0] == sim2_date[0],''
+    assert sim2_date[-1] == sim2_date[-1],''
+
+    raw_df = pd.DataFrame()
+    twist=0
+
+    for i in range(len(sim2_date)+len(sim1_date)):
+      if (len(sim1_date)<=i) or (len(sim2_date)<=i):
+        break
+      if sim1_date[i] > sim2_date[i]:
+        sim1_date  = np.insert(sim1_date, i, sim2_date[i])
+        sim1_capital = np.insert(sim1_capital, i, sim1_capital[i-1])
+        twist +=1
+      elif sim1_date[i] < sim2_date[i]:
+        sim2_date  = np.insert(sim2_date, i, sim1_date[i])
+        sim2_capital = np.insert(sim2_capital, i, sim2_capital[i-1])
+        twist +=1
+      else:
+        pass
+
+    raw_df['Date'] = sim2_date
+    raw_df['sim1'] = sim1_capital
+    raw_df['sim2'] = sim2_capital
+
+    self.raw_df = raw_df
+
+    import matplotlib.pyplot as plt
+    plt.plot(sim1_capital,label='sim1')
+    plt.plot(sim2_capital,label='sim2')
+    plt.legend()
+
+
+  def get_correlation(self, start_date:str=None, end_date:str=None):
+    """ Return
+      Correation Dataframe
+    """
+    raw_df = self.raw_df
+
+    st = raw_df['Date'].iloc[0] if start_date == None else start_date
+    ed = raw_df['Date'].iloc[-1]  if end_date == None else end_date
+
+    ranging_df = raw_df[(st<=raw_df['Date']) & (raw_df['Date']<=ed)].iloc[::-1].reset_index(drop=True)
+    corr_df = ranging_df.corr(method='pearson')
+    print(corr_df)
+
+    return 0
+
+
+
+"""
+=========================================================================
+                            MAIN
+========================================================================= 
+"""
 if __name__ == '__main__':
 
   start_capital_krw =  6_000_000 
@@ -480,38 +543,39 @@ if __name__ == '__main__':
 
   start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
 
-  if 0:
+  if 1:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'GTAA'
-    start_date, end_date,_ = ['2019-11-02', '2021-11-02','gtaa-non']
+    start_date, end_date,_ = ['2022-01-04', '2022-01-24','gtaa-non']
     #start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
     portpolio = Portpolio(portpolio_name)
     report_name = portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
   
-  if 0:
+  if 1:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'DANTE'
-    start_date, end_date,_ = ['2013-11-02', '2022-01-02','단테 올웨더']
+    start_date, end_date,_ = ['2020-01-04', '2022-01-24','']
     #start_date, end_date,_ =  ['2021-12-02', '2022-01-18','']
 
     portpolio = Portpolio(portpolio_name)
     #report_name = portpolio_name + '_cutoff10'
     #report_name = portpolio_name+'1720'
     report_name = None
-    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
     #sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AWHold')
   
   if 1:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'MyPortpolio'
-    start_date, end_date,_ = ['2020-01-18', '2022-01-21','']
+    start_date, end_date,_ = ['2020-01-04', '2022-01-24','']
     portpolio = Portpolio(portpolio_name)
     #report_name = portpolio_name+'1720'
     report_name = None
-    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-
+    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
     #sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='B&H')
+
+    SimulationReview(sim1=sim1, sim2=sim2).get_correlation()

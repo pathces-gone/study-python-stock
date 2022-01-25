@@ -88,4 +88,11 @@ Treasury bond (long-bond)
   * ~~CAGR로 결과 계산~~
   * ~~AW4/11 vs B&H plotting~~
   * 이평선추가 
-  * 포트폴리오별 correation 측정
+  * ~~포트폴리오별 correation 측정~~
+
+* 2022-01-25
+  * all-weather 진입 시점 찾아보기 
+  * quant연구 시작
+    * 유동성에 따른 상승여력 (양적긴축대비)
+    * 하락장에서 신용비율 연구 (vix, 환율, ...)
+    * 최근 한달간 이슈에 따른 원자재,금,채권 움직임 분석
