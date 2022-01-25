@@ -10,6 +10,7 @@ import pandas as pd
 import Strategy
 
 
+FIXED_EXCHANGE_RATE = True
 PRINT_TRADE_LOG = False
 PRINT_BUY_PORTPOLIO  = False#False #True
 PRINT_SELL_PORTPOLIO = False #False
@@ -58,7 +59,10 @@ class Simulation(object):
 
     trade_date_str = trade_date.strftime('%Y-%m-%d')
     if etf.src == 'YAHOO':
-      usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
+      if FIXED_EXCHANGE_RATE:
+        usd_krw = 1150
+      else:
+        usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
     else:
       usd_krw = 1.0
 
@@ -95,7 +99,10 @@ class Simulation(object):
 
     trade_date_str = trade_date.strftime('%Y-%m-%d')
     if etf.src == 'YAHOO':
-      usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
+      if FIXED_EXCHANGE_RATE:
+        usd_krw = 1150
+      else:
+        usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
     else:
       usd_krw = 1.0
 
@@ -550,29 +557,35 @@ if __name__ == '__main__':
     report_name = portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
   
-  if 1:
+  if 0:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
-    portpolio_name = 'DANTE'
-    start_date, end_date,_ = ['2020-01-04', '2022-01-24','']
-    #start_date, end_date,_ =  ['2021-12-02', '2022-01-18','']
+    report_name = None
+    start_date, end_date,_ = ['2020-01-04', '2020-04-24','']
 
+    portpolio_name = 'DANTE'
     portpolio = Portpolio(portpolio_name)
-    #report_name = portpolio_name + '_cutoff10'
-    #report_name = portpolio_name+'1720'
-    report_name = None
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-    #sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AWHold')
-  
+
+    portpolio_name = 'MyPortpolio'
+    portpolio = Portpolio(portpolio_name)
+    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+
+    SimulationReview(sim1=sim1, sim2=sim2).get_correlation()
+
   if 1:
+    FIXED_EXCHANGE_RATE = True
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
-    portpolio_name = 'MyPortpolio'
-    start_date, end_date,_ = ['2020-01-04', '2022-01-24','']
-    portpolio = Portpolio(portpolio_name)
-    #report_name = portpolio_name+'1720'
     report_name = None
+    start_date, end_date,_ = ['2020-01-04', '2020-04-24','']
+
+    portpolio_name = 'DBC'
+    portpolio = Portpolio(portpolio_name)
+    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+
+    portpolio_name = 'SingleStocks'
+    portpolio = Portpolio(portpolio_name)
     sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-    #sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='B&H')
 
     SimulationReview(sim1=sim1, sim2=sim2).get_correlation()

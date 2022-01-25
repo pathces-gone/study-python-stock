@@ -92,6 +92,7 @@ Treasury bond (long-bond)
 
 * 2022-01-25
   * all-weather 진입 시점 찾아보기 
+    * DBC와 직접만든 DBC correlation 비교해보셈
   * quant연구 시작
     * 유동성에 따른 상승여력 (양적긴축대비)
     * 하락장에서 신용비율 연구 (vix, 환율, ...)
