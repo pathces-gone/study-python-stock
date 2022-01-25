@@ -486,7 +486,6 @@ class SimulationReview(Simulation):
     assert sim2_date[-1] == sim2_date[-1],''
 
     raw_df = pd.DataFrame()
-    twist=0
 
     for i in range(len(sim2_date)+len(sim1_date)):
       if (len(sim1_date)<=i) or (len(sim2_date)<=i):
@@ -494,11 +493,9 @@ class SimulationReview(Simulation):
       if sim1_date[i] > sim2_date[i]:
         sim1_date  = np.insert(sim1_date, i, sim2_date[i])
         sim1_capital = np.insert(sim1_capital, i, sim1_capital[i-1])
-        twist +=1
       elif sim1_date[i] < sim2_date[i]:
         sim2_date  = np.insert(sim2_date, i, sim1_date[i])
         sim2_capital = np.insert(sim2_capital, i, sim2_capital[i-1])
-        twist +=1
       else:
         pass
 
@@ -543,7 +540,7 @@ if __name__ == '__main__':
 
   start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
 
-  if 1:
+  if 0:
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'GTAA'
