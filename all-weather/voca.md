@@ -30,3 +30,10 @@
 
 ## CAGR( Compound Annual Growth Rate)
 연평균 복잡 수익률 => 퀀트수익지표
+
+
+## 
+* Earnings yield : 기업이익률
+* dividend yield : 배당수익률 = Annual dividends per share/ price per share (주당배당금/한 주의 가격)
+* payout ratio : 배당성향(배당금지급비율)= Annual dividends per share/ earning per share (주당배당금/주당순이익) = 총 배당금/순이익
+> [payout ratio](https://m.blog.naver.com/PostView.naver?isHttpsRedirect=true&blogId=silvury&logNo=221306024962)
