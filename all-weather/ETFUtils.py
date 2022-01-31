@@ -28,7 +28,7 @@ def plot_candle_chart(price:DataFrame):
   """ Return
     plot()
   """
-  fig = plt.figure(figsize=(20,5))
+  fig = plt.figure(figsize=(10,5))
   ax = fig.add_subplot(1,1,1)
 
   candlestick2_ohlc(ax, price['Open'],price['High'],price['Low'], price['Close'], width=0.5, colorup='r', colordown='b')

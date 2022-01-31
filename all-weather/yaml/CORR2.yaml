@@ -1,11 +1,27 @@
 CORR2:
-  'SSG':
-    - etf: '005930'
-      comment: '삼성전자'
+  Energy:
+    - etf: '218420'
       source: 'NAVER'
-      ratio: 10
-  'KOSPI200':
-    - etf: '069660'
-      comment: 'KODEX200'
+      comment: 'KOODEX 미국S&P에너지(합성)'
+      ratio: 20
+  Industrial:
+    - etf: '200030'
       source: 'NAVER'
-      ratio: 10
+      comment: 'KODEX 미국S&P산업재(합성)'
+      ratio: 20
+
+  SPY:
+    - etf: '219480'
+      comment: 'KODEX 미국S&P500선물(H)'
+      source: 'NAVER'
+      ratio: 20
+  IEF:
+    - etf: '308620'
+      comment: 'KODEX 미국채10년선물'
+      source: 'NAVER'
+      ratio: 20
+  GOLD:
+    - etf: '132030' #'319640'
+      comment: 'KODEX 골드선물(H)' #'TIGER 골드선물(H)'
+      source: 'NAVER'
+      ratio: 20

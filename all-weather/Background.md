@@ -1,6 +1,6 @@
 
-Gold
-Treasury bond (long-bond)
+##Sector
+![](image/sector.png)
 
 
 
@@ -132,3 +132,7 @@ Treasury bond (long-bond)
     * 근데 장기금리가 안오르면 경기가 나쁘다는것, ism제조업지표+소비업지표로 경기전망함.
     * 단기땡기고 10년물 내려옴 --> 유동성때문에 그랬다 하지만 이젠 10년물 올려서 실물이 살아나야함.
       * 그렇지 않을 경우 yield curver inversion이 박살남
+
+
+* 2022-01-31:
+  * 기술적분석 (전고돌파) 찾기, 변곡점기준

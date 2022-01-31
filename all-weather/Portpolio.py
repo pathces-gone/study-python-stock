@@ -50,8 +50,13 @@ class Portpolio(object):
     for i,label in enumerate(yaml[name].values()):
       for sub_label in label:
         if sub_label['etf'].find('/') != -1:
-          sub_portpolio, sub_ratios = Portpolio(name=sub_label['etf'][1:]).get_etf()
-          sub_ratios = [(sub_label['ratio']/100)*sr for sr in sub_ratios]
+          sp, sr = Portpolio(name=sub_label['etf'][1:]).get_etf()
+          sr = [(sub_label['ratio']/100)*s for s in sr]
+          sub_portpolio.append(sp)
+          sub_ratios.append(sr)
+
+          #sub_portpolio = sp
+          #sub_ratios = sr
           continue
         etf_code   = np.append(etf_code, sub_label['etf'])  
         etf_name   = np.append(etf_name, sub_label['comment'])
@@ -63,9 +68,12 @@ class Portpolio(object):
     for i,etf in enumerate(etf_code):
       tmp = list(yaml[name].keys())
       portpolio.append( ETF(name=etf_name[i], code=etf_code[i], index= tmp[cmds[i]],src=sources[i]))
-      
-    portpolio = [*portpolio, *sub_portpolio]
-    ratios = [*ratios, *sub_ratios]
+          
+    def flatten(t):
+      return [item for sublist in t for item in sublist]
+
+    portpolio = [*portpolio, *flatten(sub_portpolio)]
+    ratios = [*ratios, *flatten(sub_ratios)]
     assert np.sum(ratios) <= 100, ""
 
     self.portpolio = portpolio
@@ -91,7 +99,7 @@ class Portpolio(object):
       raw_df[etf.name] = etf.price_df.iloc[::-1].reset_index(drop=True)['Close']
     
     ranging_df = raw_df[(start_date<=raw_df['Date']) & (raw_df['Date']<=end_date)].iloc[::-1].reset_index(drop=True)
-    print(ranging_df)
+    #print(ranging_df)
     corr_df = ranging_df.corr(method='pearson')
     return corr_df
 
@@ -136,18 +144,22 @@ class Portpolio(object):
   LOCAL
 """
 if __name__ == '__main__':
-  if 1:
+  if 0:
     po = Portpolio('CORR2')
-    start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
-    #start_date, end_date, _ = ['2021-12-05', '2022-01-17','']
+    #start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
+    start_date, end_date, _ = ['2018-12-05', '2022-01-17','']
     #start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
     corr_df = po.get_correlation(start_date=start_date, end_date=end_date)
 
     if 1:
       po.get_corr_plot(corr_df)
   else:
-    po = Portpolio('SingleStocks')
-    po.get_usd_krw('2013-01-04', '2022-01-04',180)
+    po = Portpolio('MyPortpolio2')
+    p,s=po.get_etf()
+    for i in p:
+      print(i.code)
+
+    #po.get_usd_krw('2013-01-04', '2022-01-04',180)
 
 #    usd = po.usd_krw
     #p = usd.loc[ usd['Date']=='2021-03-05' ,'Close'].to_list()[0]

@@ -18,7 +18,7 @@ class ETF(object):
     if os.path.exists(self.path):
       price_df = pd.read_csv(self.path)
     else:
-      price_df = ETFUtils.utils_get_price(code=self.code,page=124,source=src)
+      price_df = ETFUtils.utils_get_price(code=self.code,page=500,source=src)
       price_df.to_csv(self.path,encoding='utf-8')
 
     self.price_df = price_df
@@ -31,9 +31,13 @@ class ETF(object):
     mavg  = price_low.rolling(window=window).mean()
     return mavg
 
-  def get_chart(self):
-    #assert self.price_df != None,"price_df is None"
-    ETFUtils.plot_candle_chart(self.price_df)
+  def get_chart(self, start_date:str, end_date:str):
+    #print(self.price_df)
+    df = self.price_df.loc[
+              (self.price_df['Date'] >= start_date) & (self.price_df['Date'] <= end_date)
+              ,:]
+    #print(df)
+    ETFUtils.plot_candle_chart(df)
 
   def get_price(self, date:str):
     price_df = self.price_df
@@ -53,18 +57,12 @@ class ETF(object):
     ret = round(price,2)
     return ret, next_date
 
-
-
 """
   LOCAL
 """
 if __name__ == '__main__':
   ticker = 'SPY'
   spy = ETF(name=ticker, code=ticker, index=ticker, src='YAHOO')
-  price = spy.get_price(date='2020-01-10')
-  print(price)
-
-  ticker = '137610'
-  spy = ETF(name=ticker, code=ticker, index=ticker, src='NAVER')
-  price = spy.get_price(date='2020-01-10')
-  print(price)
+  #price = spy.get_price(date='2022-01-03')
+  #print(price)
+  spy.get_inflection(start_date='2021-06-18',end_date='2022-01-18')

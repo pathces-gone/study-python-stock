@@ -1,0 +1,6 @@
+Index:
+  VIX:
+    - etf: 'VIX'
+      source: 'YAHOO'
+      comment: 'VIX'
+      ratio: 0

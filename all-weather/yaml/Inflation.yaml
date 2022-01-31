@@ -1,0 +1,31 @@
+Inflation:
+  # Energy:
+  #   - etf: '218420'
+  #     source: 'NAVER'
+  #     comment: 'KOODEX 미국S&P에너지(합성)'
+  #     ratio: 20
+  # Industrial:
+  #   - etf: '200030'
+  #     source: 'NAVER'
+  #     comment: 'KODEX 미국S&P산업재(합성)'
+  #     ratio: 30
+  # Longbonds:
+  #   - etf: '305080'
+  #     source: 'NAVER'
+  #     comment: 'TIGER 미국채10년선물'
+  #     ratio: 50
+  Energy:
+    - etf: 'DBC'
+      source: 'YAHOO'
+      comment: 'KOODEX 미국S&P에너지(합성)'
+      ratio: 20
+  Industrial:
+    - etf: 'XLI'
+      source: 'YAHOO'
+      comment: 'KODEX 미국S&P산업재(합성)'
+      ratio: 30
+  Longbonds:
+    - etf: 'IEF'
+      source: 'YAHOO'
+      comment: 'TIGER 미국채10년선물'
+      ratio: 50

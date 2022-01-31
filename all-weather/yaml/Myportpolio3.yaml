@@ -1,0 +1,6 @@
+MyPortpolio3:
+  DANTE:
+    - etf: '/MyPortpolio' # 'BCI' #
+      source: 'NAVER'
+      comment: '단테'
+      ratio: 50

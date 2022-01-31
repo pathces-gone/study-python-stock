@@ -1,6 +1,16 @@
 SingleStocks:
-  'DBC':
-    - etf: 'DBC'
+  VT:
+    - etf: 'SPY'
       source: 'YAHOO'
-      comment: '원자재'
-      ratio: 100
+      comment: '글로벌 주식'
+      ratio: 0
+
+    # - etf: '200030'
+    #   source: 'NAVER'
+    #   comment: 'KODEX 미국S&P산업재(합성)'
+    #   ratio: 100
+
+    # - etf: 'DBC'
+    #   source: 'YAHOO'
+    #   comment: '원자재'
+    #   ratio: 100

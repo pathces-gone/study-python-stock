@@ -12,9 +12,11 @@ import Strategy
 
 FIXED_EXCHANGE_RATE = True
 PRINT_TRADE_LOG = False
-PRINT_BUY_PORTPOLIO  = False#False #True
+PRINT_BUY_PORTPOLIO  = False #True
 PRINT_SELL_PORTPOLIO = False #False
 LIMIT_RATIO = True # ??
+
+FIGSIZE = (10,5)
 
 
 class Simulation(object):
@@ -47,9 +49,10 @@ class Simulation(object):
       self.earn[etf.code] =0
 
 
+
   def buy(self, etf:ETF, date:str, percent:float)->list:
     """ Return [last_qty, avg_price, self.cash, trade_date]
-  
+  ™
     """
     last_qty = self.hold_qtys[etf.code]
     curr_price, trade_date = etf.get_price(date=date)
@@ -263,7 +266,7 @@ class Simulation(object):
     """
     total_buy, trade_date = self.buy_portpolio(date=start_date)
     etfs,ratios = self.portpolio.get_etf()
-    #self.print_info()
+    self.print_info()
 
     while(pivot_date <= dt_end_date):
       """
@@ -475,9 +478,11 @@ class Simulation(object):
 
       if self.do_save:
         plt.savefig(self.report_name)
-      plt.show()
+      #plt.show()
 
     return [portpolio_name,debug_mmd,debug_capital,debug_date]
+
+
 
 
 
@@ -513,12 +518,12 @@ class SimulationReview(Simulation):
     self.raw_df = raw_df
 
     import matplotlib.pyplot as plt
-    plt.figure(figsize=(10,5))
+    plt.figure(figsize=FIGSIZE)
     plt.plot(sim1_capital,label=sim1_name)
     plt.plot(sim2_capital,label=sim2_name)
     plt.legend()
-
-
+    #plt.show()
+    
   def get_correlation(self, start_date:str=None, end_date:str=None):
     """ Return
       Correation Dataframe
@@ -532,9 +537,58 @@ class SimulationReview(Simulation):
     corr_df = ranging_df.corr(method='pearson')
     print(corr_df)
 
-    return 0
+  def get_inflection(self,start_date:str=None, end_date:str=None):
 
+    raw_df = self.raw_df
 
+    st = raw_df['Date'].iloc[0] if start_date == None else start_date
+    ed = raw_df['Date'].iloc[-1]  if end_date == None else end_date
+
+    df = raw_df[(st<=raw_df['Date']) & (raw_df['Date']<=ed)].iloc[::-1]
+    df_close = df['sim1']
+
+    inflection = pd.DataFrame(columns=['Date', 'High', 'Low'])
+    inflection['Date'] = df['Date']
+    inflection['Point'] = [0 for _ in range(len(df['Date']))]
+    
+    forward1 = df_close.iloc[1:]
+    forward2 = df_close.iloc[2:]
+
+    df_index = df_close.index
+    min_ = df_index[-1]+2
+    max_ = df_index[0]-1
+
+    for i in df_index:
+      if min_ < i < max_:
+        c = df_close.loc[i]
+        f1 = forward1.loc[i-1]
+        f2 = forward2.loc[i-2]
+        if c < f1:
+          if f1 > f2:
+            inflection['High'].loc[i-1] = f1
+
+        if c > f1:
+          if f1 < f2:
+            inflection['Low'].loc[i-1] = f1
+
+    
+    inflection['High'].replace(0, np.nan, inplace=True)
+    inflection['Low'].replace(0, np.nan, inplace=True)
+    
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=FIGSIZE)
+    plt.plot(df_close)
+    plt.plot(inflection['High'],'bo')
+    plt.plot(inflection['Low'],'ro')
+    #plt.hlines(inflection['Point'],xmin=7150,xmax=7300)
+    
+  def get_vix(self, start_date:str=None, end_date:str=None):
+    """
+      TODO
+    """
+    ticker = 'VIXM'
+    vix = ETF(name=ticker, code=ticker, index=ticker, src='YAHOO')
+    vix.get_chart(start_date=start_date ,end_date=end_date)
 
 """
 =========================================================================
@@ -545,44 +599,43 @@ if __name__ == '__main__':
 
   start_capital_krw =  6_000_000 
   capital = start_capital_krw
-
   start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
 
-  if 0:
+  if 1: #Single Portpoilo
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
-    portpolio_name = 'GTAA'
-    start_date, end_date,_ = ['2022-01-04', '2022-01-24','gtaa-non']
+    portpolio_name = 'MyPortpolio'
+    start_date, end_date,_ = ['2022-01-27', '2022-01-27','']
     #start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
     portpolio = Portpolio(portpolio_name)
-    report_name = portpolio_name + '_cutoff10'
+    report_name = None #portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
   
-  if 1:
+  if 0: # Compare Portpolio
     FIXED_EXCHANGE_RATE = False
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     report_name = None
-    start_date, end_date,_ = ['2021-11-04', '2022-01-24','']
+    start_date, end_date,_ = ['2021-01-03', '2022-01-28','']
 
     portpolio_name = 'DANTE'
     portpolio = Portpolio(portpolio_name)
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-
+    
     portpolio_name = 'MyPortpolio'
     portpolio = Portpolio(portpolio_name)
     sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
 
     SimulationReview(sim1=sim1, sim2=sim2).get_correlation()
 
-  if 0:
+  if 0: # Compare ETF
     FIXED_EXCHANGE_RATE = False
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     report_name = None
-    start_date, end_date,_ = ['2021-01-04', '2022-01-24','']
+    start_date, end_date,_ = ['2010-01-04', '2022-01-24','']
 
-    portpolio_name = 'DBC'
+    portpolio_name = 'Inflation'
     portpolio = Portpolio(portpolio_name)
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
 
@@ -590,4 +643,5 @@ if __name__ == '__main__':
     portpolio = Portpolio(portpolio_name)
     sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
 
-    SimulationReview(sim1=sim1, sim2=sim2).get_correlation()
+    sr = SimulationReview(sim1=sim1, sim2=sim2)
+    #sr.get_inflection()
