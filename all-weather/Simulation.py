@@ -605,7 +605,7 @@ if __name__ == '__main__':
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     portpolio_name = 'MyPortpolio'
-    start_date, end_date,_ = ['2022-01-27', '2022-01-27','']
+    start_date, end_date,_ = ['2022-01-04', '2022-01-31','']
     #start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
     portpolio = Portpolio(portpolio_name)
     report_name = None #portpolio_name + '_cutoff10'
