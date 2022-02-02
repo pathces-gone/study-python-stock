@@ -1,70 +1,31 @@
 MyPortpolio:
-  #'Globals':
-  #  - etf: '195970'
-  #    comment: 'ARIRANG 선진국MSCI(합성 H)'
-  #    source: 'NAVER'
-  #    ratio: 35
   'Globals':
     - etf: '251350'
       comment: 'KODEX 선진국MSCI World'
       source: 'NAVER'
       ratio: 35
-
   'Longbonds':
     - etf: '305080'
       source: 'NAVER'
       comment: 'TIGER 미국채10년선물'
       ratio: 20
-  #'Longbonds':
-  #  - etf: '308620'
-  #    source: 'NAVER'
-  #    comment: 'KODEX 미국채10년선물'
-  #    ratio: 20
-
-  #'Inflation-linked':
-  #  - etf: '610003'
-  #    source: 'NAVER'
-  #    comment: '메리츠 미국 인플레이션 국채 ETN(합성 H)'
-  #    ratio: 20
-
   'Debenture':
     - etf: '332610'
       source: 'NAVER'
       comment: 'ARIRANG 미국장기우량회사채'
       ratio: 7.5
-
-  #'Debenture':
-  #  - etf: '332610'
-  #    source: 'NAVER'
-  #    comment: 'ARIRANG 미국단기우량회사채'
-  #    ratio: 7.5
-
   'Emerging Futures':
     - etf: '152380'
       source: 'NAVER'
       comment: 'KODEX 국채선물10년'
       ratio: 7.5
-
-  #'Emerging':
-  #  - etf: '365780'
-  #    source: 'NAVER'
-  #    comment: 'KINDEX 국고채10년'
-  #    ratio: 7.5
-
-  #'Gold':
-  #  - etf: '132030' #'319640'
-  #    comment: 'KODEX 골드선물(H)' #'TIGER 골드선물(H)'
-  #    source: 'NAVER'
-  #    ratio: 5
-
   'Gold':
     - etf: '319640'
       comment: 'TIGER 골드선물(H)'
       source: 'NAVER'
       ratio: 5
-
   'Materials':
-    - etf: '/DBC' # 'BCI' #
+    - etf: '/DBC'
       source: 'NAVER'
       comment: '원자재'
       ratio: 5

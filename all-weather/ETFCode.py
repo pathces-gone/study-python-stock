@@ -34,6 +34,6 @@ class ETFTable(object):
 if __name__ == '__main__':
   etf = ETFTable()
   
-  n1 = '미국'
+  n1 = '물가'
   c1 = etf.get_code(etf = n1)
   

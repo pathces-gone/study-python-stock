@@ -1,9 +1,9 @@
-SingleStocks:
+SingleStock:
   VT:
-    - etf: 'SPY'
+    - etf: 'RPAR'
       source: 'YAHOO'
-      comment: '글로벌 주식'
-      ratio: 0
+      comment: 'RPAR'
+      ratio: 100
 
     # - etf: '200030'
     #   source: 'NAVER'

@@ -16,6 +16,8 @@ PRINT_BUY_PORTPOLIO  = False #True
 PRINT_SELL_PORTPOLIO = False #False
 LIMIT_RATIO = True # ??
 
+RESERVE = 0
+
 FIGSIZE = (10,5)
 
 
@@ -247,7 +249,7 @@ class Simulation(object):
     cutoff_flag = not DO_CUT_OFF
     max_draw_down = 0
     count =0
-    additional_paid_in = 0 #8_000_000
+    additional_paid_in = RESERVE
 
     pivot_date = dt_start_date
 
@@ -538,7 +540,6 @@ class SimulationReview(Simulation):
     print(corr_df)
 
   def get_inflection(self,start_date:str=None, end_date:str=None):
-
     raw_df = self.raw_df
 
     st = raw_df['Date'].iloc[0] if start_date == None else start_date
@@ -597,51 +598,66 @@ class SimulationReview(Simulation):
 """
 if __name__ == '__main__':
 
-  start_capital_krw =  6_000_000 
+  start_capital_krw =  12_000_000 
   capital = start_capital_krw
   start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
 
-  if 1: #Single Portpoilo
+  if 0: #Single Portpoilo
     PRINT_TRADE_LOG = True
-    DO_CUT_OFF = 0
-    portpolio_name = 'MyPortpolio'
-    start_date, end_date,_ = ['2022-01-04', '2022-01-31','']
+    DO_CUT_OFF = 1
+    portpolio_name = 'DANTE'
+    start_date, end_date,_ = ['2015-01-12', '2022-01-28','']
     #start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
     portpolio = Portpolio(portpolio_name)
     report_name = None #portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
   
-  if 0: # Compare Portpolio
+  if 1: # Compare ETF
+    FIXED_EXCHANGE_RATE = False
+    PRINT_TRADE_LOG = True
+    DO_CUT_OFF = 0
+    RESERVE = 0
+    report_name = None
+    start_date, end_date,_ = ['2021-01-04', '2022-01-24','']
+
+    portpolio_name = 'MyPortpolio3'
+    portpolio = Portpolio(portpolio_name)
+    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+
+    portpolio_name = 'SingleStock'
+    portpolio = Portpolio(portpolio_name)
+    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+
+    sr = SimulationReview(sim1=sim1, sim2=sim2).get_correlation(start_date,end_date)
+
+  if 0: # Compare B&H AW4/11
     FIXED_EXCHANGE_RATE = False
     PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
     report_name = None
-    start_date, end_date,_ = ['2021-01-03', '2022-01-28','']
+    start_date, end_date,_ = ['2020-01-04', '2022-01-24','']
 
+    portpolio_name = 'SingleStock'
+    portpolio = Portpolio(portpolio_name)
+    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
+
+    portpolio_name = 'SingleStock'
+    portpolio = Portpolio(portpolio_name)
+    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='B&H')
+
+    sr = SimulationReview(sim1=sim1, sim2=sim2).get_correlation(start_date,end_date)
+
+
+  if 0: #Cutoff
+    PRINT_TRADE_LOG = True
+    DO_CUT_OFF = 1
     portpolio_name = 'DANTE'
+    start_date, end_date,_ = ['2015-01-12', '2022-01-28','']
+    #start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
     portpolio = Portpolio(portpolio_name)
+    report_name = None #portpolio_name + '_cutoff10'
     sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-    
-    portpolio_name = 'MyPortpolio'
-    portpolio = Portpolio(portpolio_name)
-    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-
-    SimulationReview(sim1=sim1, sim2=sim2).get_correlation()
-
-  if 0: # Compare ETF
-    FIXED_EXCHANGE_RATE = False
-    PRINT_TRADE_LOG = True
     DO_CUT_OFF = 0
-    report_name = None
-    start_date, end_date,_ = ['2010-01-04', '2022-01-24','']
-
-    portpolio_name = 'Inflation'
-    portpolio = Portpolio(portpolio_name)
-    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-
-    portpolio_name = 'SingleStocks'
-    portpolio = Portpolio(portpolio_name)
     sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
 
-    sr = SimulationReview(sim1=sim1, sim2=sim2)
-    #sr.get_inflection()
+    sr = SimulationReview(sim1=sim1, sim2=sim2).get_correlation(start_date,end_date)
