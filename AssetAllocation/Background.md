@@ -137,3 +137,28 @@
 * 2022-01-31:
   * 기술적분석 (전고돌파) 찾기, 변곡점기준
   * 평균모멘텀 스코어로 주식비중
+
+
+---
+# Asset Allocation
+
+> https://www.youtube.com/watch?v=X8da7f3-0g0
+> https://allocatesmartly.com/members/cluster-analysis/
+
+## 1. Fast Tactical
+### 1.1 Vigiant AA-Aggressive (VAA-Aggressive)
+### 1.2 Vigiant AA-Balanced (VAA-Blanced)
+### 1.3 Accelerting Dual-Momentum
+
+---
+## 2. Primarily passive
+### 2.1 Permanent Protfolio
+
+### 2.2 Lazy Asset Allocation (LAA)
+
+
+---
+## 3. Slow Tactical
+### 3.1 Composite Dual-Momentum 
+
+

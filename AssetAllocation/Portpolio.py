@@ -19,7 +19,7 @@ class Portpolio(object):
   def __init__(self, name):
     self.name = name
     self.sources = None
-    self.portpolio = None
+    self.items = None
 
     usd_krw_path = os.path.join('fsdata','usd_krw.csv')
     if os.path.exists(usd_krw_path):
@@ -36,6 +36,9 @@ class Portpolio(object):
     return conf
 
   def get_etf(self):
+    """ Return
+      [items, ratio]
+    """
     name = self.name
     yaml = Portpolio.get_yaml(name)
 
@@ -64,22 +67,22 @@ class Portpolio(object):
         sources = np.append(sources,sub_label['source'])
         cmds = np.append(cmds, i)
 
-    portpolio = []
+    items = []
     for i,etf in enumerate(etf_code):
       tmp = list(yaml[name].keys())
-      portpolio.append( ETF(name=etf_name[i], code=etf_code[i], index= tmp[cmds[i]],src=sources[i]))
+      items.append( ETF(name=etf_name[i], code=etf_code[i], index= tmp[cmds[i]],src=sources[i]))
           
     def flatten(t):
       return [item for sublist in t for item in sublist]
 
-    portpolio = [*portpolio, *flatten(sub_portpolio)]
+    items = [*items, *flatten(sub_portpolio)]
     ratios = [*ratios, *flatten(sub_ratios)]
     assert np.sum(ratios) <= 100, ""
 
-    self.portpolio = portpolio
+    self.items = items
     self.sources = sources
   
-    return [portpolio, ratios]
+    return [items, ratios]
 
   def get_correlation(self, start_date, end_date):
     """ Return
@@ -91,7 +94,7 @@ class Portpolio(object):
     else:
       plt.rcParams["font.family"] = 'NanumGothic'
 
-    if self.portpolio == None:
+    if self.items == None:
       portpolio,_ = self.get_etf()
 
     raw_df = pd.DataFrame(portpolio[0].price_df[['Date']].iloc[::-1].reset_index(drop=True))
