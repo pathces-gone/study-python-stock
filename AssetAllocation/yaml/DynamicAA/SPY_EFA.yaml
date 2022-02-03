@@ -1,0 +1,11 @@
+GTAA:
+  SPY:
+    - etf: 'SPY'
+      comment: 'spy'
+      source: 'YAHOO'
+      ratio: 50
+  EFA:
+    - etf: 'EFA'
+      comment: 'EFA'
+      source: 'YAHOO'
+      ratio: 50

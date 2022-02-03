@@ -25,12 +25,14 @@ class Portpolio(object):
     if os.path.exists(usd_krw_path):
       self.usd_krw = pd.read_csv(usd_krw_path)
     else:
+      if not os.path.exists('fsdata'):
+        os.mkdir('fsdata')
       self.usd_krw = fdr.DataReader('USD/KRW')
       self.usd_krw.to_csv(usd_krw_path,encoding='utf-8')
 
   @staticmethod
-  def get_yaml(index:str)->list:
-    yaml_file_path = os.path.join(os.path.dirname(__file__),'yaml')
+  def get_yaml(index:str,yaml_path:str='yaml')->list:
+    yaml_file_path = os.path.join(os.path.dirname(__file__),yaml_path)
     with open(os.path.join(yaml_file_path, '%s.yaml'%index)) as f:
       conf = yaml.load(f, Loader=yaml.FullLoader)
     return conf
@@ -130,7 +132,6 @@ class Portpolio(object):
                 vmin = -1,vmax = 1
               )  
     plt.show()
-
 
   def get_usd_krw(self,start_date:str,end_date:str,interval:int=90):
     """ Return 

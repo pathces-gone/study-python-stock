@@ -10,34 +10,109 @@ import pandas as pd
 import Strategy
 
 
-FIXED_EXCHANGE_RATE = True
-PRINT_TRADE_LOG = False
-PRINT_BUY_PORTPOLIO  = False #True
-PRINT_SELL_PORTPOLIO = False #False
-LIMIT_RATIO = True # ??
+class SimResult(object):
+  """
+    Simulation Result
+  """
+  mmd_history     = np.array([])
+  capital_history = np.array([])
+  date_history    = np.array([])
 
-RESERVE = 0
+  def get_cagr(self):
+    start_date   = self.date_history[0]
+    end_date     = self.date_history[-1]
+    init_capital = self.get_capital(start_date)
+    last_capital = self.get_capital(end_date)
+    d1 = datetime.datetime.strptime(start_date,"%Y-%m-%d")
+    d2 = datetime.datetime.strptime(end_date,"%Y-%m-%d")
+    num_year = (d2.year - d1.year)
+    if num_year > 0:
+      cagr = (last_capital/init_capital)**(1/num_year)
+      cagr = round((cagr-1)*100,2)
+    else:
+      cagr=0.00
+    return cagr
 
-FIGSIZE = (10,5)
+  def get_cmgr(self):
+    start_date   = self.date_history[0]
+    end_date     = self.date_history[-1]
+    init_capital = self.get_capital(start_date)
+    last_capital = self.get_capital(end_date)
+    d1 = datetime.datetime.strptime(start_date,"%Y-%m-%d")
+    d2 = datetime.datetime.strptime(end_date,"%Y-%m-%d")
+    num_month = (d2.year - d1.year) * 12 + (d2.month - d1.month)
+    if num_month > 0:
+      cmgr = (last_capital/init_capital)**(1/num_month)
+      cmgr = round((cmgr-1)*100,2)
+    else:
+      cmgr=0.00
+    return cmgr
+
+  def get_capital(self,date:str):
+    index = np.where(self.date_history == date)[0]
+    if index.size:
+      ret= float(self.capital_history[index])
+    else:
+      print('get_capital:  date not found')
+      """
+        TODO next date
+      """
+      ret = 0.0
+    return ret
+
+
+class SimEnvironment(SimResult):
+  """
+    Simulation Environment
+  """
+  if 1: #Sim Data
+    start_capital_krw =  10_000_000 
+    start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
+    portpolio_name = 'DANTE'
+    reserve_per_period = 0
+    reblancing_rule = 'AW4/11' # 'B&H'
+
+  if 1: # Report
+    report_name = None
+
+  if 1: #Sim Options
+    FIXED_EXCHANGE_RATE = True
+    PRINT_TRADE_LOG = False
+    PRINT_BUY_PORTPOLIO  = False
+    PRINT_SELL_PORTPOLIO = False
+    LIMIT_RATIO = True
+    RESULT_PLOT = False
+    FIGSIZE = (10,5)
+
 
 
 class Simulation(object):
   """ Return Simulation
     Simulation Root node of Portpolio (ETF chain)
   """
-  def __init__(self, portpolio:Portpolio, capital:int, report_name:str):
-    self.portpolio = portpolio
-    if report_name != None:
-      self.report_name = os.path.join('sim-result',report_name+'.png')
-      self.do_save = True
+  #def __init__(self, portpolio:Portpolio, capital:int, report_name:str):
+  def __init__(self, portpolio:Portpolio=None, env:SimEnvironment=None):
+    self.env = env
+    if portpolio:
+      self.portpolio = portpolio
     else:
-      self.do_save = False
-    self.init_budgets = capital
-    self.budgets = capital # constant init value
-    self.capital = capital # reblanced value
-    self.cash    = capital
+      self.portpolio = Portpolio(env.portpolio_name)
 
-    # ETFs Data
+    self.do_save = False
+    if env.report_name:
+      self.report_path = os.path.join('sim-result',env.report_name+'.png')
+      self.do_save = True
+
+    """
+    ==========================
+          SIM Variables 
+    ==========================
+    """
+    self.init_budgets = env.start_capital_krw
+    self.budgets = env.start_capital_krw # constant init value
+    self.capital = env.start_capital_krw # reblanced value
+    self.cash    = env.start_capital_krw
+
     self.max_ratios = dict()
     self.curr_ratios = dict()
     self.max_qty = dict()
@@ -45,7 +120,7 @@ class Simulation(object):
     self.hold_qtys = dict()
     self.earn= dict()
 
-    for etf in portpolio.get_etf()[0]:
+    for etf in self.portpolio.get_etf()[0]:
       self.avg_price[etf.code]  =0 
       self.hold_qtys[etf.code]  =0
       self.earn[etf.code] =0
@@ -54,7 +129,7 @@ class Simulation(object):
 
   def buy(self, etf:ETF, date:str, percent:float)->list:
     """ Return [last_qty, avg_price, self.cash, trade_date]
-  ™
+
     """
     last_qty = self.hold_qtys[etf.code]
     curr_price, trade_date = etf.get_price(date=date)
@@ -64,7 +139,7 @@ class Simulation(object):
 
     trade_date_str = trade_date.strftime('%Y-%m-%d')
     if etf.src == 'YAHOO':
-      if FIXED_EXCHANGE_RATE:
+      if self.env.FIXED_EXCHANGE_RATE:
         usd_krw = 1150
       else:
         usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
@@ -75,7 +150,7 @@ class Simulation(object):
     buy_percent = (self.max_ratios[etf.code]*(percent/100))
     buy_qty = int(buy_percent*self.capital/100 / curr_price_krw)
 
-    if LIMIT_RATIO:
+    if self.env.LIMIT_RATIO:
       over = (self.avg_price[etf.code]*self.hold_qtys[etf.code] + buy_qty*curr_price_krw)/(self.capital)*100
     else:
       over = 0
@@ -104,7 +179,7 @@ class Simulation(object):
 
     trade_date_str = trade_date.strftime('%Y-%m-%d')
     if etf.src == 'YAHOO':
-      if FIXED_EXCHANGE_RATE:
+      if self.env.FIXED_EXCHANGE_RATE:
         usd_krw = 1150
       else:
         usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
@@ -164,7 +239,7 @@ class Simulation(object):
       self.max_ratios[etf.code] = ratios[i]
       self.curr_ratios[etf.code]= ratios[i]
 
-    if PRINT_BUY_PORTPOLIO==True:
+    if self.env.PRINT_BUY_PORTPOLIO:
       print('\nBuy - %s'%self.portpolio.name)
       print("%20s | %30s %20s | %10s %10s %10s %10s %10s"%('index','name','code','budget','ratio(%)', 'price', 'qty', 'buy'))
       print('-'*140)
@@ -200,7 +275,7 @@ class Simulation(object):
     etfs,ratios = self.portpolio.get_etf()
     #prices  = [etf.get_price(date=date) for etf in etfs]
 
-    if PRINT_SELL_PORTPOLIO==True:
+    if self.env.PRINT_SELL_PORTPOLIO:
       print('\nSell - %s'%self.portpolio.name)
       print("%20s | %30s %20s | %10s %10s %15s %15s %10s %10s %15s"%('index','name','code','buy','ratio(%)', 'buy price','sell price', 'qty', 'sell', 'earn ratio(%)'))
       print('-'*170)
@@ -227,10 +302,13 @@ class Simulation(object):
     return total_sell,trade_date
 
 
-  def Run(self, start_date:str, end_date:str, what:str):
+  def Run(self):
     """ Algorithm
       시작시간부터 하루하루 넘어가면서 MDD계산
     """
+    start_date      = self.env.start_date
+    end_date        = self.env.end_date
+    reblancing_rule = self.env.reblancing_rule
     dt_start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
     dt_end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d")
 
@@ -246,15 +324,15 @@ class Simulation(object):
                           Trading Conditions 
     ========================================================================= 
     """
-    cutoff_flag = not DO_CUT_OFF
+    cutoff_flag = not self.env.DO_CUT_OFF
     max_draw_down = 0
     count =0
-    additional_paid_in = RESERVE
+    additional_paid_in = self.env.reserve_per_period
 
     pivot_date = dt_start_date
 
     last_reblance_day = pivot_date
-    if what=='AW4/11':
+    if reblancing_rule=='AW4/11':
       AW_4  = datetime.datetime.strptime('2000-04-30',"%Y-%m-%d") 
       AW_11 = datetime.datetime.strptime('2000-11-30',"%Y-%m-%d")
       s_year = pivot_date.year
@@ -268,7 +346,8 @@ class Simulation(object):
     """
     total_buy, trade_date = self.buy_portpolio(date=start_date)
     etfs,ratios = self.portpolio.get_etf()
-    self.print_info()
+    if self.env.PRINT_TRADE_LOG:
+      self.print_info()
 
     while(pivot_date <= dt_end_date):
       """
@@ -276,7 +355,7 @@ class Simulation(object):
                               Strategy Start 
       ========================================================================= 
       """
-      if what=='AW4/11':
+      if reblancing_rule=='AW4/11':
         if s_year != pivot_date.year:
           s_year =  pivot_date.year
           s_year_4 = 0
@@ -315,7 +394,7 @@ class Simulation(object):
 
           max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
 
-          if PRINT_TRADE_LOG:
+          if self.env.PRINT_TRADE_LOG:
             print(trade_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
 
           """
@@ -347,8 +426,7 @@ class Simulation(object):
 
           max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
 
-
-      elif what=='B&H':
+      elif reblancing_rule=='B&H':
           """
             MDD
           """
@@ -361,40 +439,8 @@ class Simulation(object):
           draw_down = (temp_earn)/last_capital*100
 
           max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
-
-      elif what == 'AbsMomentum':
-        """
-      
-        """
-        pass
-      elif what == 'RelativeMomentum':
-        """
-          <Relative Strength Strategies for Investing>
-            * This portfolio begins with the asset classes listed in the GTAA Moderate allocation.
-            * selects the top six out of the thirteen assets as ranked by an average of 1, 3, 6, and
-              12-month total returns (momentum).
-                1. US Large-cap value - 5%
-                2. US Large-cap Momentum - 5%
-                3. US Small-cap value - 5%
-                4. US Small-cap Momentum - 5%
-                5. Foreign Developed - 10%
-                6. Foreign Emerging  - 10%
-                7. US 10 Year Goverment Bonds  - 5%
-                8. Foreign 10 Year Goverment Bonds  - 5%
-                9. US Corporate Bonds  - 5%
-                10. US 30 Year Goverment Bonds  - 5%
-                11. Commodities(Index)  - 10%
-                12. Commodities(Gold)   - 10%
-                12. Real Estate Investment Trusts - 20%
-            * The assets are only included if they are above their long-term moving average, 
-            otherwise that portion of the portfolio is moved to cash.
-        """
-        pass
-
-      elif what == 'DualMomentum':
-        pass
       else:
-        pass
+        break
 
       """
       =========================================================================
@@ -402,12 +448,9 @@ class Simulation(object):
       ========================================================================= 
       """
 
-      """
-        Cut-off
-      """
-      if DO_CUT_OFF:
+      if self.env.DO_CUT_OFF:
         if (max_draw_down < -10) & (cutoff_flag==False):
-          if PRINT_TRADE_LOG:
+          if self.env.PRINT_TRADE_LOG:
             print(pivot_date,'Cut-off!!   mmd: %2.2f%%'%max_draw_down)
           total_sell, trade_date = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
           self.capital = total_sell
@@ -441,17 +484,13 @@ class Simulation(object):
       last_capital = self.capital
       total_sell, trade_date = self.sell_portpolio(date=end_date)
       earn_ratio = round((total_sell-last_capital)/last_capital*100,2)
-      print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
 
       self.budgets += count*additional_paid_in
-      self.print_info()
+      if self.env.PRINT_TRADE_LOG:
+        print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
+        self.print_info()
 
-      if 1: # CAGR
-        if int((dt_end_date-dt_start_date).days/365) > 0:
-          cagr = (self.capital/self.budgets)**(1/int((dt_end_date-dt_start_date).days/365))
-          cagr = round((cagr-1)*100,2)
-          print("CAGR= %3.2f [%%]"%cagr)
-    if 1:
+    if self.env.RESULT_PLOT:
       """
         Report
       """
@@ -464,12 +503,9 @@ class Simulation(object):
       ax2 = fig.add_subplot(3,1,2)
       ax3 = fig.add_subplot(3,1,3)
 
-      #ax1.plot(debug_date, debug_mmd , label = 'mmd(%)')
-      #ax2.plot(debug_date, debug_capital, label = 'capital')
       ax1.plot(range(len(debug_mmd)), debug_mmd , label = 'mmd(%)')
       ax2.plot(range(len(debug_mmd)), debug_capital, label = 'capital')
       ax3.plot(df_usd_krw['Date'],df_usd_krw['Close'], label='usd-krw')
-
 
       plt.xticks(np.arange(0, len(df_usd_krw['Date'])+1, 30), rotation=45)
 
@@ -479,16 +515,14 @@ class Simulation(object):
       plt.grid()
 
       if self.do_save:
-        plt.savefig(self.report_name)
-      #plt.show()
+        plt.savefig(self.report_path)
+      plt.show()
 
-    return [portpolio_name,debug_mmd,debug_capital,debug_date]
-
-
-
-
-
-
+    sim_result = self.env
+    sim_result.mmd_history     = debug_mmd
+    sim_result.capital_history = debug_capital
+    sim_result.date_history    = debug_date
+    return sim_result
 
 
 
@@ -597,67 +631,17 @@ class SimulationReview(Simulation):
 ========================================================================= 
 """
 if __name__ == '__main__':
+  env = SimEnvironment()
+  env.start_capital_krw =  12_000_000 
+  env.PRINT_TRADE_LOG = False
+  env.DO_CUT_OFF = False
+  env.portpolio_name = 'DANTE'
+  env.start_date, env.end_date,_ = ['2021-01-12', '2021-02-26','']
+  env.report_name = None
+  env.reblancing_rule='AW4/11'
 
-  start_capital_krw =  12_000_000 
-  capital = start_capital_krw
-  start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
+  sim1 = Simulation(env=env).Run()
+  print(sim1.get_capital(date=env.end_date))
+  print(sim1.get_cmgr())
+  print(sim1.get_cagr())
 
-  if 0: #Single Portpoilo
-    PRINT_TRADE_LOG = True
-    DO_CUT_OFF = 1
-    portpolio_name = 'DANTE'
-    start_date, end_date,_ = ['2015-01-12', '2022-01-28','']
-    #start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
-    portpolio = Portpolio(portpolio_name)
-    report_name = None #portpolio_name + '_cutoff10'
-    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-  
-  if 1: # Compare ETF
-    FIXED_EXCHANGE_RATE = False
-    PRINT_TRADE_LOG = True
-    DO_CUT_OFF = 0
-    RESERVE = 0
-    report_name = None
-    start_date, end_date,_ = ['2021-01-04', '2022-01-24','']
-
-    portpolio_name = 'MyPortpolio3'
-    portpolio = Portpolio(portpolio_name)
-    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-
-    portpolio_name = 'SingleStock'
-    portpolio = Portpolio(portpolio_name)
-    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-
-    sr = SimulationReview(sim1=sim1, sim2=sim2).get_correlation(start_date,end_date)
-
-  if 0: # Compare B&H AW4/11
-    FIXED_EXCHANGE_RATE = False
-    PRINT_TRADE_LOG = True
-    DO_CUT_OFF = 0
-    report_name = None
-    start_date, end_date,_ = ['2020-01-04', '2022-01-24','']
-
-    portpolio_name = 'SingleStock'
-    portpolio = Portpolio(portpolio_name)
-    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-
-    portpolio_name = 'SingleStock'
-    portpolio = Portpolio(portpolio_name)
-    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='B&H')
-
-    sr = SimulationReview(sim1=sim1, sim2=sim2).get_correlation(start_date,end_date)
-
-
-  if 0: #Cutoff
-    PRINT_TRADE_LOG = True
-    DO_CUT_OFF = 1
-    portpolio_name = 'DANTE'
-    start_date, end_date,_ = ['2015-01-12', '2022-01-28','']
-    #start_date, end_date,_ = ['2006-11-02', '2022-01-02','gtaa-non']
-    portpolio = Portpolio(portpolio_name)
-    report_name = None #portpolio_name + '_cutoff10'
-    sim1 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-    DO_CUT_OFF = 0
-    sim2 = Simulation(portpolio=portpolio, capital=capital,report_name=report_name).Run(start_date= start_date, end_date= end_date, what='AW4/11')
-
-    sr = SimulationReview(sim1=sim1, sim2=sim2).get_correlation(start_date,end_date)

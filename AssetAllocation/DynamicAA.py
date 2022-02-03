@@ -1,4 +1,5 @@
 import numpy as np
+import yaml, os, datetime
 from ETF import ETF
 from Portpolio import Portpolio
 from Simulation import Simulation
@@ -17,7 +18,6 @@ class Stratgy(object):
         pass
     def relative_momentum(self):
         pass
-
 
 class FastTactial(Stratgy):
     @staticmethod
@@ -62,7 +62,6 @@ class DynamicAA(Simulation):
         2. Portpolio를 반환함
         3. 다시 Simulation
     """
-
     def __init__(self):
         def flatten(_lst:list):
             dic = dict()
@@ -75,15 +74,27 @@ class DynamicAA(Simulation):
         pass
 
     def load_tactic(self, tactic:str='DualMomentum'):
-        self.onload_tactic = None
+        """  Return 
+          'onload_tactic'
+        """
+        onload_tactic = None
         for k,vs in self.Tactics.items():
             if tactic in vs:
-                self.onload_tactic = {k:tactic}
+                onload_tactic = {k:tactic}
 
-        assert self.onload_tactic != None, 'tactic not found'
-        print(self.onload_tactic)
+        assert onload_tactic != None, 'tactic not found'
+        return onload_tactic
+
+    def load_asset_group(self,asset_group_name:str):
+        """ Return None
+          `asset_group`
+        """
+        asset_group = Portpolio(name=asset_group_name)
+        return asset_group
 
     def Run(self):
+
+        
         pass
 
 if __name__ == '__main__':
