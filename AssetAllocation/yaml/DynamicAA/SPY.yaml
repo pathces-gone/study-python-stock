@@ -1,0 +1,6 @@
+DynamicAA/SPY:
+  SPY:
+    - etf: 'SPY'
+      comment: '미국S&P500'
+      source: 'YAHOO'
+      ratio: 100

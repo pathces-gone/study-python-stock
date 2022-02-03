@@ -1,0 +1,6 @@
+DynamicAA/SHY:
+  SPY:
+    - etf: 'SHY'
+      comment: '미국단기채'
+      source: 'YAHOO'
+      ratio: 100

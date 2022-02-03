@@ -1,0 +1,6 @@
+DynamicAA/EFA:
+  EFA:
+    - etf: 'EFA'
+      comment: '선진국지수'
+      source: 'YAHOO'
+      ratio: 100

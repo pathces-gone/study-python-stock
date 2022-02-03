@@ -82,6 +82,7 @@ class SimEnvironment(SimResult):
     PRINT_SELL_PORTPOLIO = False
     LIMIT_RATIO = True
     RESULT_PLOT = False
+    DO_CUT_OFF = False
     FIGSIZE = (10,5)
 
 

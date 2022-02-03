@@ -2,22 +2,65 @@ import numpy as np
 import yaml, os, datetime
 from ETF import ETF
 from Portpolio import Portpolio
-from Simulation import Simulation
+from Simulation import Simulation, SimEnvironment
 
 
 class Stratgy(object):
-    """
-        전략에 따라 종목을 받고 
-        1. 모멘텀 계산 후 사야될 것
-        2. 비중
-        을 반환함
-    """
-    def __init__(self):
-        pass
-    def abs_momentum(self):
-        pass
-    def relative_momentum(self):
-        pass
+    @staticmethod
+    def get_compound_growth_rate(asset_group_name:str, today:datetime):
+        """ Return
+          [CMGR, CAGR]
+        """
+        def set_simenv(asset_group_name:str, today:datetime, interval:int):
+            path = os.path.join('yaml','DynamicAA')
+            if not os.path.exists(path):
+                os.mkdir(path)
+            asset_group_name = os.path.join('DynamicAA',asset_group_name)
+            env = SimEnvironment()
+            env.start_capital_krw, env.portpolio_name = [10_000_000 ,asset_group_name]
+
+            prev_date = today - datetime.timedelta(days=interval)
+            env.start_date, env.end_date = [prev_date.strftime('%Y-%m-%d'), today.strftime('%Y-%m-%d')]
+            env.reblancing_rule='B&H'
+            asset_group = Portpolio(name=asset_group_name)
+            return env, asset_group
+
+        simenv, asset_group = set_simenv(asset_group_name, today, interval=365)
+        sim1 = Simulation(portpolio=asset_group, env=simenv).Run()
+        return [sim1.get_cmgr(), sim1.get_cagr()]
+
+    @staticmethod
+    def abs_momentum(asset_group:list, today:datetime):
+        """ Return [[crit_cmgr], [crit_cagr]]
+          CMGR or CAGR > 0 or not
+        """
+        HOLD = True
+        SELL = False
+        crit_cmgr = []
+        crit_cagr = []
+        for asset in asset_group:
+            _cmgr, _cagr = Stratgy.get_compound_growth_rate(asset, today)
+            if _cmgr > 0:
+                crit_cmgr.append(HOLD)
+            else:
+                crit_cmgr.append(SELL)
+
+            if _cagr > 0:
+                crit_cagr.append(HOLD)
+            else:
+                crit_cagr.append(SELL)
+        return crit_cmgr, crit_cagr
+
+    @staticmethod
+    def relative_momentum(asset_group:list, today:datetime):
+        """ Return [crit_cmgr, crit_cagr]
+        """
+        asset1_cmgr, asset1_cagr = Stratgy.get_compound_growth_rate(asset_group[0], today)
+        asset2_cmgr, asset2_cagr = Stratgy.get_compound_growth_rate(asset_group[1], today)
+        crit_cmgr = asset_group[1] if (asset1_cmgr < asset2_cmgr) else asset_group[0]
+        crit_cagr = asset_group[1] if (asset1_cagr < asset2_cagr) else asset_group[0]
+        return [crit_cmgr, crit_cagr]
+
 
 class FastTactial(Stratgy):
     @staticmethod
@@ -27,7 +70,7 @@ class FastTactial(Stratgy):
 
     @staticmethod
     def VAA_aggressive():
-       pass
+        pass
 
 class PrimarilyPassive(Stratgy):
     @staticmethod
@@ -37,7 +80,7 @@ class PrimarilyPassive(Stratgy):
     
     @staticmethod
     def LAA():
-       pass
+        pass
 
 class SlowTactical(Stratgy):
     @staticmethod
@@ -47,11 +90,26 @@ class SlowTactical(Stratgy):
 
     @staticmethod
     def CompositeDualMomentum():
-       pass
+        pass
 
     @staticmethod
-    def DualMomentum():
-       pass
+    def DualMomentum(today:str):
+        """
+          Binary selection -> ratio = 100%
+        """
+        assets = ['SPY','EFA']
+        today = datetime.datetime.strptime(today,"%Y-%m-%d")
+
+        rel = Stratgy.relative_momentum(asset_group = assets, today=today)
+        ticker = rel[1] #CAGR
+
+        abs = Stratgy.abs_momentum(assets, today=today) # rel에서 선택한 ticker의 abs가 False(SELL)라면 전체매도 
+        if not abs[assets.index(ticker)]:
+            print(ticker, 'SELL')
+        else:
+            print(ticker, 'BUY')
+        
+        return 0
 
 
 class DynamicAA(Simulation):
@@ -85,17 +143,9 @@ class DynamicAA(Simulation):
         assert onload_tactic != None, 'tactic not found'
         return onload_tactic
 
-    def load_asset_group(self,asset_group_name:str):
-        """ Return None
-          `asset_group`
-        """
-        asset_group = Portpolio(name=asset_group_name)
-        return asset_group
-
     def Run(self):
-
-        
+        SlowTactical.DualMomentum('2022-02-02')
         pass
 
 if __name__ == '__main__':
-    daa = DynamicAA()
+    daa = DynamicAA().Run()
