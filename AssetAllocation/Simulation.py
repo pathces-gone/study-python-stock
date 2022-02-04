@@ -48,6 +48,12 @@ class SimResult(object):
       cmgr=0.00
     return cmgr
 
+  def get_last_date(self):
+    return datetime.datetime.strptime(self.date_history[-1],"%Y-%m-%d")
+
+  def get_last_capital(self):
+    return self.capital_history[-1]
+
   def get_capital(self,date:str):
     index = np.where(self.date_history == date)[0]
     if index.size:
