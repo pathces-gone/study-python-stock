@@ -1,4 +1,4 @@
-import unicodedata, requests, time, datetime
+import unicodedata, requests, time, datetime, os
 import pandas as pd
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
@@ -87,8 +87,21 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
 
 
 
+def get_trading_date(ticker:str):
+  path = os.path.join('fsdata',ticker+'.csv')
+  print(path)
+  if os.path.exists(path):
+    price_df = pd.read_csv(path)
+    return price_df['Date']
+  else:
+    return None
+
 """
   LOCAL
 """
 if __name__ == '__main__':
-  utils_get_price(code='261240', page=10, source='NAVER')
+  #utils_get_price(code='261240', page=10, source='NAVER')
+  ret = get_trading_date('SPY')
+  #print(ret)
+  ret=ret.loc[('2019-01-03'<=ret) & (ret<'2020-01-03')]
+  print(len(ret))

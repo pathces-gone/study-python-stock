@@ -16,19 +16,20 @@ class Portpolio(object):
   """ Return Portpolio
     Portpolio Node (ETF chain)
   """
-  def __init__(self, name):
+  def __init__(self, name:str, is_usd_krw_need:bool=True ):
     self.name = name
     self.sources = None
     self.items = None
 
-    usd_krw_path = os.path.join('fsdata','usd_krw.csv')
-    if os.path.exists(usd_krw_path):
-      self.usd_krw = pd.read_csv(usd_krw_path)
-    else:
-      if not os.path.exists('fsdata'):
-        os.mkdir('fsdata')
-      self.usd_krw = fdr.DataReader('USD/KRW')
-      self.usd_krw.to_csv(usd_krw_path,encoding='utf-8')
+    if is_usd_krw_need:
+      usd_krw_path = os.path.join('fsdata','usd_krw.csv')
+      if os.path.exists(usd_krw_path):
+        self.usd_krw = pd.read_csv(usd_krw_path)
+      else:
+        if not os.path.exists('fsdata'):
+          os.mkdir('fsdata')
+        self.usd_krw = fdr.DataReader('USD/KRW')
+        self.usd_krw.to_csv(usd_krw_path,encoding='utf-8')
 
   @staticmethod
   def get_yaml(index:str,yaml_path:str='yaml')->list:

@@ -1,6 +1,6 @@
 SingleStock:
   VT:
-    - etf: 'RPAR'
+    - etf: 'SPY'
       source: 'YAHOO'
       comment: 'RPAR'
       ratio: 100

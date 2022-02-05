@@ -39,10 +39,14 @@ class ETF(object):
     #print(df)
     ETFUtils.plot_candle_chart(df)
 
-  def get_price(self, date:str):
+  def get_price(self, date):
     price_df = self.price_df
     price = 0
-    next_date = datetime.datetime.strptime(date,"%Y-%m-%d")
+    if type(date) == datetime.datetime: 
+      next_date = date
+    else:
+      next_date = datetime.datetime.strptime(date,"%Y-%m-%d")
+
     if not price_df.loc[price_df['Date'] == date].empty:
       price = price_df.loc[price_df['Date'] == date]['Close'].to_list()[0]
     else:

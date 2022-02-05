@@ -408,7 +408,7 @@ class Simulation(object):
             Next date
           """
           debug_mmd = np.append(debug_mmd,round(max_draw_down,2))
-          debug_capital = np.append(debug_capital,round(last_capital+temp_earn,2))
+          debug_capital = np.append(debug_capital,round(last_capital+earn,2))
           debug_date =  np.append(debug_date,trade_date.strftime('%Y-%m-%d'))
           max_draw_down= 0
           cutoff_flag = False
@@ -424,6 +424,7 @@ class Simulation(object):
             MDD
           """
           temp_earn = 0
+          max_draw_down= 0
           for i,etf in enumerate(etfs):
             update_hold_qtys, update_earn, update_cash, trade_date = self.sell(etf=etf, date=pivot_date.strftime('%Y-%m-%d'), percent=100)
             temp_earn += update_earn
