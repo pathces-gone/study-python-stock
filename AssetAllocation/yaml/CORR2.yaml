@@ -1,27 +1,21 @@
 CORR2:
-  Energy:
-    - etf: '218420'
-      source: 'NAVER'
-      comment: 'KOODEX 미국S&P에너지(합성)'
-      ratio: 20
-  Industrial:
-    - etf: '200030'
-      source: 'NAVER'
-      comment: 'KODEX 미국S&P산업재(합성)'
-      ratio: 20
-
   SPY:
     - etf: '219480'
       comment: 'KODEX 미국S&P500선물(H)'
       source: 'NAVER'
-      ratio: 20
-  IEF:
-    - etf: '308620'
-      comment: 'KODEX 미국채10년선물'
+      ratio: 25
+  TIGER:
+    - etf: '360750'
+      comment: 'TIGER S&P500'
       source: 'NAVER'
-      ratio: 20
-  GOLD:
-    - etf: '132030' #'319640'
-      comment: 'KODEX 골드선물(H)' #'TIGER 골드선물(H)'
+      ratio: 25
+  KODEX:
+    - etf: '379800'
+      comment: 'KODEX SNP500TR'
       source: 'NAVER'
-      ratio: 20
+      ratio: 25
+  ARIRANG:
+    - etf: '269540'
+      comment: 'ARIRANG SNP500(H)'
+      source: 'NAVER'
+      ratio: 25

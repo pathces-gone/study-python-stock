@@ -144,12 +144,12 @@ class Portpolio(object):
     plt.xticks(np.arange(0, len(df['Date'])+1, interval), rotation=45)
     plt.grid()
     plt.show()
-
+ 
 """
   LOCAL
 """
 if __name__ == '__main__':
-  if 0:
+  if 1:
     po = Portpolio('CORR2')
     #start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
     start_date, end_date, _ = ['2018-12-05', '2022-01-17','']

@@ -26,3 +26,18 @@
 code =
 page = 
 https://finance.naver.com/item/sise_day.nhn?code={code}}&page={page}
+
+
+---
+## Python3 Env.
+* python 3.9
+* `pip3 install -U`
+  * yfinance
+  * numpy
+  * pandas
+  * pandas_datareader
+  * bs4
+  * matplotlib
+  * mplfinance, Pillow
+  * seaborn
+  * finance-datareader

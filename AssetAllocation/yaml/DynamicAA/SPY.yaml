@@ -1,4 +1,14 @@
 DynamicAA/SPY:
+  #SPY:
+  #    - etf: '360750'
+  #      comment: 'KODEX 미국S&P500 TR'
+  #      source: 'NAVER'
+  #      ratio: 100
+  #SPY:
+  #  - etf: '219480'
+  #    comment: 'KODEX 미국S&P500선물(H)'
+  #    source: 'NAVER'
+  #    ratio: 100
   SPY:
     - etf: 'SPY'
       comment: '미국S&P500'

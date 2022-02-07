@@ -68,8 +68,10 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
     for _page in range(1, page):
       pg_url = '{url}&page={page}'.format(url=url, page=_page).replace(' ','')
       html_table = get_html_table(pg_url)
-      df = df.append(pd.read_html(html_table, header=0)[0], ignore_index=True)
+      df = pd.concat([df,pd.read_html(html_table, header=0)[0]],axis=0,ignore_index=True)
+    print(df)
     df = df.dropna(axis=0)
+    print(df)
     assert df.empty == False, "the requested dataframe is empty."
 
     df = df.rename(columns= {'날짜': 'Date', '종가': 'Close', '전일비': 'Diff', '시가': 'Open', '고가': 'High', '저가': 'Low', '거래량': 'Volume'}) 
@@ -100,8 +102,8 @@ def get_trading_date(ticker:str):
   LOCAL
 """
 if __name__ == '__main__':
-  #utils_get_price(code='261240', page=10, source='NAVER')
-  ret = get_trading_date('SPY')
+  utils_get_price(code='261240', page=10, source='NAVER')
+  #ret = get_trading_date('SPY')
   #print(ret)
-  ret=ret.loc[('2019-01-03'<=ret) & (ret<'2020-01-03')]
-  print(len(ret))
+  #ret=ret.loc[('2019-01-03'<=ret) & (ret<'2020-01-03')]
+  #print(len(ret))

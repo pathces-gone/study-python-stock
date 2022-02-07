@@ -1,4 +1,10 @@
 DynamicAA/EFA:
+  #EFA:
+  #  - etf: '195930'
+  #    comment: 'TIGER 유로스탁스50(합성 H)'
+  #    source: 'NAVER'
+  #    ratio: 100
+
   EFA:
     - etf: 'EFA'
       comment: '선진국지수'
