@@ -81,8 +81,9 @@ class Momentum(MomentumScore):
         etfs = etfs.squeeze()
 
         score       = MomentumScore.classic_momentum_score(etfs=etfs,today=today, months=12, score_func=lambda x,y: (y-x)/x*100) 
-        ratio_score = np.ones(len(etfs)) #MomentumScore.average_momentum_score(etfs=etfs, today=today) 
-        
+        ratio_score = np.ones(len(etfs))
+        #ratio_score = MomentumScore.average_momentum_score(etfs=etfs, today=today) 
+
         index = np.argmax(score)
         ticker   = etfs[index].code
         return [ticker, ratio_score]
@@ -131,13 +132,27 @@ class SlowTactical(Stratgy):
     def DualMomentum(today:datetime):
         """ Return [ticker, BUY, ratio]
           Binary selection -> ratio = 100%
+
+          * ORIGIANL:
+            if SPY12 > BLI12:
+                ret = max(SPY12, EFA12)
+            else:
+                ret = AGG
+
+          * MODIFY:
+            if SPY12<0 and EFA12<0:
+              ret = AGG
+            else:
+              ret = max(SPY12, EFA12)
+
         """
         #assets = {'SPY':'219480','EFA':'195930'}
         #assets = {'SPY':'SPY','EFA':'EFA','SHY':'SHY'}
-        assets = {'SPY':'SPY','EFA':'EFA'}
+        #assets = {'SPY':'SPY','EFA':'EFA'}
+        assets = {'SPY':'SPY','EFA':'EFA','AGG':'AGG'}
         assets_inv = {value: key for key, value in assets.items()}
         momentum=Momentum(list(assets.keys()))
-        
+
         rel, ratio_score = momentum.relative_momentum(today=today)
         abs = momentum.abs_momentum( today=today)
 
@@ -145,7 +160,8 @@ class SlowTactical(Stratgy):
         index = list(assets.keys()).index(ticker)
         ratio = ratio_score[index]
 
-        ret = [ticker,SELL,0]
+
+        ret = ['AGG',BUY,1]
         if abs[index]:
             ret = [ticker, BUY, ratio]
 
@@ -181,7 +197,7 @@ class DynamicAA(Simulation):
         return onload_tactic
 
 
-    def Run(self):
+    def Run(self, start_date:str, end_date:str):
         def set_simenv(asset_group_name:str, capital:int, start_date:datetime, end_date:int):
             path = os.path.join('yaml','DynamicAA')
             if not os.path.exists(path):
@@ -191,7 +207,7 @@ class DynamicAA(Simulation):
             env.start_capital_krw, env.portpolio_name = [capital ,asset_group_name]
             env.start_date, env.end_date = [start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')]
             env.reblancing_rule='AW4/11'
-            env.DO_CUT_OFF = True
+            env.DO_CUT_OFF = False
             env.PRINT_TRADE_LOG = False
             env.FIXED_EXCHANGE_RATE = False
             asset_group = Portpolio(name=asset_group_name,is_usd_krw_need=True)
@@ -207,7 +223,7 @@ class DynamicAA(Simulation):
             env.DO_CUT_OFF = False
             env.PRINT_TRADE_LOG = False
             env.FIXED_EXCHANGE_RATE = False
-            env.reserve_per_period=6000000
+            env.reserve_per_period= 0
             asset_group = Portpolio(name=asset_group_name,is_usd_krw_need=True)
             return env, asset_group
 
@@ -216,17 +232,17 @@ class DynamicAA(Simulation):
                               Initial
         ========================================================================= 
         """
-        init_capital = 2_000_000
+        init_capital = 10_000_000
         
         import ETFUtils
         market_open_date = ETFUtils.get_trading_date(ticker='SPY')
 
         def get_next_month(today:datetime):
-            nextmonth = today + relativedelta.relativedelta(months=1)
+            nextmonth = today + relativedelta.relativedelta(days=7)#(months=1)
             return nextmonth
 
-        sim_start_date = datetime.datetime.strptime("2015-02-04","%Y-%m-%d")
-        sim_end_date   = datetime.datetime.strptime("2020-01-28","%Y-%m-%d")
+        sim_start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
+        sim_end_date   = datetime.datetime.strptime(end_date,"%Y-%m-%d")
         today = sim_start_date
         capital = init_capital
         mmd = 0
@@ -242,7 +258,7 @@ class DynamicAA(Simulation):
         capital_list = np.array([])
         mmd_list = np.array([])
         _iter = 0
-        additional_paid_in = 500000
+        additional_paid_in = 0
         with open(os.path.join('sim-result','%s-%s-%s.txt'%(tatic,sim_start_date ,init_capital)),'w') as f:
             while 1:
                 next_month = get_next_month(today=today)
@@ -256,7 +272,7 @@ class DynamicAA(Simulation):
                     today   = sim_partial.get_last_date()
                     mmd     = np.min(sim_partial.mmd_history)
                     mmd_list= np.append(mmd_list,sim_partial.mmd_history)
-                    capital_list = np.append(capital_list,sim_partial.capital_history)
+                    capital_list = np.append(capital_list, sim_partial.capital_history + (capital-input_capital))
 
                     f.write("%4s %s : %d  mmd=%.02f[%%]\n"%(ticker,today ,capital,mmd))
                     print("%4s %s : %d  mmd=%.02f[%%]"%(ticker,today ,capital,mmd))
@@ -302,13 +318,13 @@ class DynamicAA(Simulation):
             import matplotlib.pyplot as plt
             plt.plot(capital_list) 
             plt.plot(sim_partial.capital_history, label="Dual Momentum")
-            #plt.show()
+            plt.show()
 
             plt.plot(mmd_list)
             plt.plot(sim_partial.mmd_history, label="SPY AW4/11")
-            #plt.show()
+            plt.show()
 
 
 
 if __name__ == '__main__':
-    daa = DynamicAA().Run()
+    daa = DynamicAA().Run(start_date="2005-01-28",end_date="2008-01-28")

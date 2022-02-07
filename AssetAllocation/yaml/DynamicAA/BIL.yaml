@@ -1,0 +1,6 @@
+DynamicAA/BIL:
+  BIL:
+    - etf: 'BIL'
+      comment: '초단기채권'
+      source: 'YAHOO'
+      ratio: 100

@@ -1,0 +1,6 @@
+DynamicAA/AGG:
+  AGG:
+    - etf: 'AGG'
+      comment: '안전자산'
+      source: 'YAHOO'
+      ratio: 100
