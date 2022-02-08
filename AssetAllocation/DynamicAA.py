@@ -235,7 +235,7 @@ class SlowTactical(Stratgy):
         index = list(assets.keys()).index(ticker)
         ratio = ratio_score[index]
 
-        ret = [0,BUY,1]
+        ret = [0,0,SELL,1]
         if abs[index]:
             ret = [0, index, BUY, ratio]
 
@@ -297,8 +297,12 @@ class DynamicAA(Simulation):
         market_open_date = sim_env.market_open_date
 
         def get_next_month(today:datetime):
-            nextmonth = today + relativedelta.relativedelta(days=7)#(months=1)
+            nextmonth = today + relativedelta.relativedelta(days=14) #months=1 #
             return nextmonth
+
+        def get_next_day(today:datetime):
+            nextday = today + relativedelta.relativedelta(days=7)
+            return nextday
 
         sim_start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
         sim_end_date   = datetime.datetime.strptime(end_date,"%Y-%m-%d")
@@ -308,11 +312,14 @@ class DynamicAA(Simulation):
 
         if tactic == 'DualMomentum':
             tactic_func = SlowTactical.DualMomentum
+            next_date_func = get_next_month
         elif tactic == 'VAA_aggressive':
             tactic_func = FastTactial.VAA_aggressive
+            next_date_func = get_next_day
         else:
             # TODO
             tactic_func = SlowTactical.DualMomentum
+            next_date_func = get_next_month
 
         """
         =========================================================================
@@ -328,7 +335,7 @@ class DynamicAA(Simulation):
 
         with open(os.path.join('sim-result','%s-%s-%s.txt'%(tactic,sim_start_date ,init_capital)),'w') as f:
             while 1:
-                next_month = get_next_month(today=today)
+                next_month = next_date_func(today=today)
                 which_group, ticker_index, is_buy, ratio = tactic_func(sim_assets_dict, today)
                 partial_end_date = next_month if next_month < sim_end_date else sim_end_date
   
@@ -408,53 +415,70 @@ if __name__ == '__main__':
         env.FIXED_EXCHANGE_RATE = False
         return env
   
-    if 0:
-        sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','AGG':'AGG'}}
-        sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2020-03-01",end_date="2022-01-15")
-        daa = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='DualMomentum')
-    else:
-        sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
-        sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2005-03-01",end_date="2022-01-15")
-        daa = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='VAA_aggressive')
+    start_date="2020-08-01"
+    end_date="2022-02-02"
+
+    #sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','AGG':'AGG'}}
+    sim1_assets = {'Aggressive':{'QRFT':'QRFT','EFA':'EFA','AGG':'AGG'}}
+
+    sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date=start_date,end_date=end_date)
+    daa1 = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='DualMomentum')
+
+    #sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
+    sim1_assets = {'Aggressive':{'QRFT':'QRFT','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
+
+    sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date=start_date,end_date=end_date)
+    daa2 = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='VAA_aggressive')
+
+
 
     """
     ====================================
             Reference: Static AA
     ====================================
     """
-    if 1: 
-        def set_simenv(asset_list:dict, capital:int, start_date:str, end_date:str):
-          asset_names = asset_list.keys()
-          asset_yamls = [os.path.join(name) for name in asset_names] 
+    def set_simenv(asset_list:dict, capital:int, start_date:str, end_date:str):
+        asset_names = asset_list.keys()
+        asset_yamls = [os.path.join(name) for name in asset_names] 
 
-          env = SimEnvironment()
-          env.portpolio_index = 0
-          env.portpolio_list = asset_yamls
-          env.start_capital_krw = 10_000_000
-          env.start_date, env.end_date = [start_date, end_date]
-          env.reblancing_rule = 'AW4/11'
-          env.market_open_date = ETFUtils.get_trading_date(ticker='SPY')
+        env = SimEnvironment()
+        env.portpolio_index = 0
+        env.portpolio_list = asset_yamls
+        env.start_capital_krw = 10_000_000
+        env.start_date, env.end_date = [start_date, end_date]
+        env.reblancing_rule = 'AW4/11'
+        env.market_open_date = ETFUtils.get_trading_date(ticker='SPY')
 
-          env.DO_CUT_OFF = False
-          env.PRINT_TRADE_LOG = True
-          env.FIXED_EXCHANGE_RATE = False
-          return env
+        env.DO_CUT_OFF = False
+        env.PRINT_TRADE_LOG = True
+        env.FIXED_EXCHANGE_RATE = False
+        return env
 
-        sim1_assets = {'GTAA-NON':'GTAA-NON'}
-        sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2020-03-01",end_date="2022-01-15")
-        saa = StaticAA().Run(sim_assets=sim1_assets, sim_env=sim1_env)
+    sim1_assets = {'QRAFT':'QRAFT'}
+    sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date=start_date,end_date=end_date)
+    saa = StaticAA().Run(sim_assets=sim1_assets, sim_env=sim1_env)
 
-        """
-        ====================================
-          
-        ====================================
-        """
-        import matplotlib.pyplot as plt
 
-        plt.plot(daa.capital_history, label="Dual Momentum")
-        plt.plot(saa.capital_history, label="GTAA AW4/11")
-        plt.show()
+    import matplotlib.pyplot as plt
+    plt.figure(figsize=[16,10])
+    plt.plot(daa1.capital_history, label="Dual Momentum")
+    plt.plot(daa2.capital_history, label="VAA")
+    plt.plot(saa.capital_history,  label="QRAFT AW4/11")
+    
+    avg_c = daa1.capital_history + daa2.capital_history +saa.capital_history
+    avg_c = avg_c/3
+    plt.plot(avg_c,label='avg')
+    plt.legend()
+    plt.show()
 
-        plt.plot(daa.mmd_history, label="Dual Momentum")
-        plt.plot(saa.mmd_history, label="GTAA AW4/11")
-        plt.show()
+
+    plt.figure(figsize=[16,10])
+    plt.plot(daa1.mmd_history, label="Dual Momentum")
+    plt.plot(daa2.mmd_history, label="VAA")
+    plt.plot(saa.mmd_history,  label="QRAFT AW4/11")
+
+    avg_m = daa1.mmd_history + daa2.mmd_history + saa.mmd_history
+    avg_m = avg_m/3
+    plt.plot(avg_m, label='avg')
+    plt.legend()
+    plt.show()

@@ -1,0 +1,6 @@
+DynamicAA/QRFT:
+  QRFT:
+    - etf: 'QRFT'
+      comment: ''
+      source: 'YAHOO'
+      ratio: 100

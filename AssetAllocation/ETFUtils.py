@@ -91,7 +91,6 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
 
 def get_trading_date(ticker:str):
   path = os.path.join('fsdata',ticker+'.csv')
-  print(path)
   if os.path.exists(path):
     price_df = pd.read_csv(path)
     return price_df['Date']

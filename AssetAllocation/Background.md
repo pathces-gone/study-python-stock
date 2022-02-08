@@ -138,6 +138,11 @@
   * 기술적분석 (전고돌파) 찾기, 변곡점기준
   * 평균모멘텀 스코어로 주식비중
 
+* 2022-02-08:
+  * 4-11 적용해보기
+    * 11-4 = gold + share
+    * 4-11 = ief
+
 
 ---
 # Asset Allocation
@@ -149,6 +154,8 @@
 ### 1.1 Vigiant AA-Aggressive (VAA-Aggressive)
 ### 1.2 Vigiant AA-Balanced (VAA-Blanced)
 ### 1.3 Accelerting Dual-Momentum
+### 1.4 DAA
+카나리아 자산군 VWO, BND
 
 ---
 ## 2. Primarily passive

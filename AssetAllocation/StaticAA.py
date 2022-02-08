@@ -33,10 +33,12 @@ if __name__ == '__main__':
       env.market_open_date = ETFUtils.get_trading_date(ticker='SPY')
 
       env.DO_CUT_OFF = False
-      env.PRINT_TRADE_LOG = False
+      env.PRINT_TRADE_LOG = True
       env.FIXED_EXCHANGE_RATE = False
       return env
 
-    sim1_assets = {'GTAA-NON':'GTAA-NON'}
-    sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2007-08-28",end_date="2008-04-01")  
+    #sim1_assets = {'GTAA-NON':'GTAA-NON'}
+    sim1_assets = {'QRAFT':'QRAFT'}
+    sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2020-03-28",end_date="2021-02-01")  
     sim_result = StaticAA().Run(sim_assets=sim1_assets, sim_env=sim1_env)
+    print(sim_result.get_cagr())

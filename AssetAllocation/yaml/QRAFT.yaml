@@ -1,0 +1,16 @@
+QRAFT:
+  'Globals':
+    - etf: 'QRFT'
+      source: 'YAHOO'
+      comment: 'QRFT'
+      ratio: 25
+  'Longbonds':
+    - etf: 'IEF'
+      source: 'YAHOO'
+      comment: '미국 장기채'
+      ratio: 25
+  'GLD':
+    - etf: 'GLD'
+      source: 'YAHOO'
+      comment: '금'
+      ratio: 25
