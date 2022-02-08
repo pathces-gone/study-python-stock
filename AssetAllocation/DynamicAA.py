@@ -106,6 +106,18 @@ class FastTactial(Stratgy):
 
     @staticmethod
     def VAA_aggressive():
+        """ Return [ticker_index, BUY, ratio]
+          Aggressive Assets  : SPY, EFA, EEM, AGG
+          Conservative Assets: LQD, IEF, SHY
+
+          Momentum Score: 1, 3, 6, 12 months
+            모멘텀 스코어=(12×1개월 수익률)+(4×3개월 수익률)+(2×6개월 수익률)+(1×12개월 수익률)
+
+          if Aggressive가 모두 모멘텀스코어 0 이상일 경우 
+            -> 가장 점수가 높은 aggressive asset에 투자
+          else
+            -> 모멘텀 스코어가 가장 높은 Conservative Assets에 투자
+        """
         pass
 
 class PrimarilyPassive(Stratgy):
