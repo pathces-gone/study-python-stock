@@ -1,0 +1,6 @@
+DynamicAA/LQD:
+  LQD:
+    - etf: 'LQD'
+      comment: ''
+      source: 'YAHOO'
+      ratio: 100

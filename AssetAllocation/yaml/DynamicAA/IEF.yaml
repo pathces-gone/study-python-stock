@@ -1,0 +1,6 @@
+DynamicAA/IEF:
+  IEF:
+    - etf: 'IEF'
+      comment: ''
+      source: 'YAHOO'
+      ratio: 100

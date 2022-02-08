@@ -47,6 +47,28 @@ class MomentumScore(object):
         score = score_func(prev_prices, today_prices).astype(np.float32)
         return score
 
+
+    @staticmethod
+    def vaa_momentum_score(etfs:list[ETF], today:datetime, months:int=None, score_func:types.LambdaType=None):
+        """ Return list[float]
+          모멘텀 스코어=(12×1개월 수익률)+(4×3개월 수익률)+(2×6개월 수익률)+(1×12개월 수익률)
+        """
+        momentums_for_month = np.zeros(len(etfs))
+        pivot_month = [1,3,6,12]
+        weight      = [12,4,2,1]
+
+        for i in pivot_month:
+            prev_date = today - relativedelta.relativedelta(months=i)
+            prev_prices = np.array([etf.get_price(date=prev_date)[0] for etf in etfs])
+            today_prices= np.array([etf.get_price(date=today)[0] for etf in etfs])
+
+            earn = (today_prices-prev_prices)/prev_prices*100
+            momentums_for_month = np.vstack((momentums_for_month, earn))
+
+        momentums_for_month = momentums_for_month[1:] # 4xetfs
+        score = np.matmul(weight, momentums_for_month)# 1x4  4xetfs = 1xetfs
+        return score
+
 class Momentum(MomentumScore):
     def __init__(self, asset_yaml_names:list[str]):
         self.asset_yaml_names = asset_yaml_names
@@ -91,6 +113,21 @@ class Momentum(MomentumScore):
     def average_momentum(self):
         pass
     
+    def vaa_momentum(self, today:datetime):
+        portpolio_list = self.portpolio_list
+
+        etfs = np.array([])
+        for asset in portpolio_list:
+            _etfs,_ = asset.get_etf()
+            etfs = np.append(etfs, _etfs)
+        etfs = etfs.squeeze()
+
+        score       = MomentumScore.vaa_momentum_score(etfs=etfs,today=today, months=None, score_func=None) 
+        #ratio_score = np.ones(len(etfs))
+
+        index = np.argmax(score)
+        ticker   = etfs[index].code
+        return [ticker, score] #[ticker, ratio_score]
 
 
 class Stratgy(Momentum):
@@ -105,7 +142,7 @@ class FastTactial(Stratgy):
         return {'FastTactial':ITEMS}
 
     @staticmethod
-    def VAA_aggressive():
+    def VAA_aggressive(assets:dict, today:datetime):
         """ Return [ticker_index, BUY, ratio]
           Aggressive Assets  : SPY, EFA, EEM, AGG
           Conservative Assets: LQD, IEF, SHY
@@ -118,7 +155,25 @@ class FastTactial(Stratgy):
           else
             -> 모멘텀 스코어가 가장 높은 Conservative Assets에 투자
         """
-        pass
+
+        agg = Momentum(list(assets['Aggressive'].keys()))
+        con = Momentum(list(assets['Conservative'].keys()))
+
+        agg_ticker, agg_score = agg.vaa_momentum(today=today)
+        if np.min(agg_score) < 0:
+            con_ticker, con_score = con.vaa_momentum(today=today)
+            which_group = 'Conservative'
+            which_group_index = 4
+            ticker = con_ticker
+        else:
+            which_group = 'Aggressive'
+            which_group_index = 0
+            ticker = agg_ticker
+
+        index = list(assets[which_group].keys()).index(ticker)
+       # which_group_index = list(assets.keys()).index(which_group) * assets[which_group]
+        ret = [which_group_index,index,BUY,1]
+        return ret
 
 class PrimarilyPassive(Stratgy):
     @staticmethod
@@ -128,6 +183,17 @@ class PrimarilyPassive(Stratgy):
     
     @staticmethod
     def LAA():
+        """ Return
+          LAA 전략은 영구 포트폴리오처럼 주식, 채권, 금 비중을 4분의 1로 똑같이 한다.
+          단, 경기가 안 좋을 때만 현금 비중을 그대로 두고, 경기가 좋을 때는 현금을 나스닥에 투자한다.
+          평상시에는 주식 50%, 금과 채권 각각 25% 비중이고 경기가 안 좋을 때는 현금, 주식, 금, 채권 비중이 각각 25%가 된다.
+
+          “실업률이 최근 10개월 평균보다 위라면 경제가 안 좋다고 가정한다. 
+          예를 들어 미국 실업률이 보통 3~4%였는데 지난해 4월 15%까지 상승했다. 
+          이럴 때를 경기가 안 좋다는 신호로 본다.”
+
+          > https://weekly.donga.com/BestClick/3/all/11/3102871/1
+        """
         pass
 
 class SlowTactical(Stratgy):
@@ -141,8 +207,8 @@ class SlowTactical(Stratgy):
         pass
 
     @staticmethod
-    def DualMomentum(today:datetime):
-        """ Return [ticker_index, BUY, ratio]
+    def DualMomentum(assets:dict, today:datetime):
+        """ Return [which_group_index, ticker_index, BUY, ratio]
           Binary selection -> ratio = 100%
 
           * ORIGIANL:
@@ -158,10 +224,7 @@ class SlowTactical(Stratgy):
               ret = max(SPY12, EFA12)
 
         """
-        #assets = {'SPY':'219480','EFA':'195930'}
-        #assets = {'SPY':'SPY','EFA':'EFA','SHY':'SHY'}
-        #assets = {'SPY':'SPY','EFA':'EFA'}
-        assets = {'SPY':'SPY','EFA':'EFA','AGG':'AGG'}
+        assets = assets['Aggressive']
         assets_inv = {value: key for key, value in assets.items()}
         momentum=Momentum(list(assets.keys()))
 
@@ -174,7 +237,7 @@ class SlowTactical(Stratgy):
 
         ret = [0,BUY,1]
         if abs[index]:
-            ret = [index, BUY, ratio]
+            ret = [0, index, BUY, ratio]
 
         return ret
 
@@ -245,6 +308,8 @@ class DynamicAA(Simulation):
 
         if tactic == 'DualMomentum':
             tactic_func = SlowTactical.DualMomentum
+        elif tactic == 'VAA_aggressive':
+            tactic_func = FastTactial.VAA_aggressive
         else:
             # TODO
             tactic_func = SlowTactical.DualMomentum
@@ -264,7 +329,7 @@ class DynamicAA(Simulation):
         with open(os.path.join('sim-result','%s-%s-%s.txt'%(tactic,sim_start_date ,init_capital)),'w') as f:
             while 1:
                 next_month = get_next_month(today=today)
-                ticker_index, is_buy, ratio = tactic_func(today)
+                which_group, ticker_index, is_buy, ratio = tactic_func(sim_assets_dict, today)
                 partial_end_date = next_month if next_month < sim_end_date else sim_end_date
   
                 if is_buy:
@@ -273,8 +338,7 @@ class DynamicAA(Simulation):
                     sim_env.start_capital_krw = input_capital
                     sim_env.start_date        = today.strftime('%Y-%m-%d')
                     sim_env.end_date          = partial_end_date.strftime('%Y-%m-%d')
-                    sim_portpolio             = Portpolio(name=sim_env.portpolio_list[ticker_index], is_usd_krw_need=True)
-
+                    sim_portpolio             = Portpolio(name=sim_env.portpolio_list[which_group+ticker_index], is_usd_krw_need=True)
                     sim_partial               = Simulation(portpolio=sim_portpolio, env=sim_env).Run()
 
                     capital      = sim_partial.get_last_capital() + (capital-input_capital)
@@ -283,8 +347,8 @@ class DynamicAA(Simulation):
                     mmd_list     = np.append(mmd_list, sim_partial.mmd_history)
                     capital_list = np.append(capital_list, sim_partial.capital_history + (capital-input_capital))
 
-                    f.write("%4s %s : %d  mmd=%.02f[%%]\n"%(sim_env.portpolio_list[ticker_index],today ,capital,mmd))
-                    print("%4s %s : %d  mmd=%.02f[%%]"%(sim_env.portpolio_list[ticker_index],today ,capital,mmd))
+                    f.write("%4s %s : %d  mmd=%.02f[%%]\n"%(sim_env.portpolio_list[which_group+ticker_index],today ,capital,mmd))
+                    print("%4s %s : %d  mmd=%.02f[%%]"%(sim_env.portpolio_list[which_group+ticker_index],today ,capital,mmd))
                 else:
                     days = len(market_open_date.loc[(today.strftime('%Y-%m-%d')<=market_open_date) & (market_open_date<partial_end_date.strftime('%Y-%m-%d'))])
                     mmd_list     = np.append(mmd_list,    np.ones(days)*mmd_list[-1])
@@ -325,12 +389,15 @@ if __name__ == '__main__':
     =====================================
     """
     def set_simenv(asset_list:dict, capital:int, start_date:str, end_date:str):
-        asset_names = asset_list.keys()
-        asset_yamls = [os.path.join('DynamicAA',name) for name in asset_names] 
+        asset_groups = asset_list.keys()
+        asset_yamls = np.array([])
+        for asset_group in asset_groups:
+            asset_names  = asset_list[asset_group] 
+            asset_yamls  = np.append(asset_yamls,[os.path.join('DynamicAA',name) for name in asset_names])
 
         env = SimEnvironment()
         env.portpolio_index = 0
-        env.portpolio_list = asset_yamls
+        env.portpolio_list  = asset_yamls
         env.start_capital_krw = capital
         env.start_date, env.end_date = [start_date, end_date]
         env.reblancing_rule='AW4/11'
@@ -340,10 +407,15 @@ if __name__ == '__main__':
         env.PRINT_TRADE_LOG = False
         env.FIXED_EXCHANGE_RATE = False
         return env
-
-    sim1_assets = {'SPY':'SPY','EFA':'EFA','AGG':'AGG'}
-    sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2014-08-01",end_date="2022-01-15")
-    daa = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env)
+  
+    if 0:
+        sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','AGG':'AGG'}}
+        sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2020-03-01",end_date="2022-01-15")
+        daa = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='DualMomentum')
+    else:
+        sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
+        sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2005-03-01",end_date="2022-01-15")
+        daa = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='VAA_aggressive')
 
     """
     ====================================
@@ -369,16 +441,14 @@ if __name__ == '__main__':
           return env
 
         sim1_assets = {'GTAA-NON':'GTAA-NON'}
-        sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2014-08-01",end_date="2022-01-15")
+        sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2020-03-01",end_date="2022-01-15")
         saa = StaticAA().Run(sim_assets=sim1_assets, sim_env=sim1_env)
 
-
-    """
-    ====================================
-      
-    ====================================
-    """
-    if 1:
+        """
+        ====================================
+          
+        ====================================
+        """
         import matplotlib.pyplot as plt
 
         plt.plot(daa.capital_history, label="Dual Momentum")

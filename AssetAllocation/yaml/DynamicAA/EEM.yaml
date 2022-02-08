@@ -1,0 +1,6 @@
+DynamicAA/EEM:
+  EEM:
+    - etf: 'EEM'
+      comment: ''
+      source: 'YAHOO'
+      ratio: 100

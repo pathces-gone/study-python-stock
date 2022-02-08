@@ -635,6 +635,7 @@ class SimulationReview(Simulation):
     vix = ETF(name=ticker, code=ticker, index=ticker, src='YAHOO')
     vix.get_chart(start_date=start_date ,end_date=end_date)
 
+
 """
 =========================================================================
                             MAIN
