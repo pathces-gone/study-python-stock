@@ -6,13 +6,12 @@ from dateutil import relativedelta
 import ETFUtils
 from ETF import ETF
 from Portpolio import Portpolio
-from Simulation import Simulation, SimEnvironment
+from Simulation import Simulation, SimEnvironment, SimResult
+from StaticAA import StaticAA
 
 BUY = True
 SELL = False
 DEBUG = False
-
-
 
 class MomentumScore(object):
     @staticmethod
@@ -249,6 +248,7 @@ class DynamicAA(Simulation):
         mmd_list = np.array([])
         _iter = 0
         additional_paid_in = 0
+
         with open(os.path.join('sim-result','%s-%s-%s.txt'%(tactic,sim_start_date ,init_capital)),'w') as f:
             while 1:
                 next_month = get_next_month(today=today)
@@ -266,9 +266,9 @@ class DynamicAA(Simulation):
                     sim_partial               = Simulation(portpolio=sim_portpolio, env=sim_env).Run()
 
                     capital      = sim_partial.get_last_capital() + (capital-input_capital)
-                    today        = sim_partial.get_last_date()
+                    today        = sim_partial.get_last_date()  + relativedelta.relativedelta(days=1)
                     mmd          = np.min(sim_partial.mmd_history)
-                    mmd_list     = np.append(mmd_list,sim_partial.mmd_history)
+                    mmd_list     = np.append(mmd_list, sim_partial.mmd_history)
                     capital_list = np.append(capital_list, sim_partial.capital_history + (capital-input_capital))
 
                     f.write("%4s %s : %d  mmd=%.02f[%%]\n"%(sim_env.portpolio_list[ticker_index],today ,capital,mmd))
@@ -286,8 +286,10 @@ class DynamicAA(Simulation):
                     break
 
             num_year = ( sim_end_date.year-sim_start_date.year)
-            cagr = ((capital)/(init_capital+_iter*additional_paid_in))**(1/num_year)
-            cagr = round((cagr-1)*100,2)
+            cagr = 0
+            if num_year > 0:
+                cagr = ((capital)/(init_capital+_iter*additional_paid_in))**(1/num_year)
+                cagr = round((cagr-1)*100,2)
             print('Simulation Done.\nITER: %d, CAGR: %4.02f[%%] MMD:%4.02f[%%]\n'%(_iter,cagr, np.min(mmd_list)))
 
             """
@@ -295,11 +297,21 @@ class DynamicAA(Simulation):
                                   Strategy End & Reference
             ========================================================================= 
             """
-        return [] #simout
+
+        sim_result = SimResult()
+        sim_result.mmd_history = mmd_list
+        sim_result.capital_history = capital_list
+        sim_result.date_history = np.array([]) #TODO
+        return sim_result
 
 
 
 if __name__ == '__main__':
+    """
+    =====================================
+              Dynamic AA
+    =====================================
+    """
     def set_simenv(asset_list:dict, capital:int, start_date:str, end_date:str):
         asset_names = asset_list.keys()
         asset_yamls = [os.path.join('DynamicAA',name) for name in asset_names] 
@@ -317,52 +329,50 @@ if __name__ == '__main__':
         env.FIXED_EXCHANGE_RATE = False
         return env
 
-
     sim1_assets = {'SPY':'SPY','EFA':'EFA','AGG':'AGG'}
-    sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2005-01-28",end_date="2008-01-28")
+    sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2014-08-01",end_date="2022-01-15")
     daa = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env)
 
+    """
+    ====================================
+            Reference: Static AA
+    ====================================
+    """
+    if 1: 
+        def set_simenv(asset_list:dict, capital:int, start_date:str, end_date:str):
+          asset_names = asset_list.keys()
+          asset_yamls = [os.path.join(name) for name in asset_names] 
+
+          env = SimEnvironment()
+          env.portpolio_index = 0
+          env.portpolio_list = asset_yamls
+          env.start_capital_krw = 10_000_000
+          env.start_date, env.end_date = [start_date, end_date]
+          env.reblancing_rule = 'AW4/11'
+          env.market_open_date = ETFUtils.get_trading_date(ticker='SPY')
+
+          env.DO_CUT_OFF = False
+          env.PRINT_TRADE_LOG = True
+          env.FIXED_EXCHANGE_RATE = False
+          return env
+
+        sim1_assets = {'GTAA-NON':'GTAA-NON'}
+        sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date="2014-08-01",end_date="2022-01-15")
+        saa = StaticAA().Run(sim_assets=sim1_assets, sim_env=sim1_env)
 
 
-    # reference : todo static-aa
-    '''
-    def set_simenv2(asset_group_name:str, capital:int, start_date:datetime, end_date:int):
-        asset_group_name = os.path.join(asset_group_name)
-        env = SimEnvironment()
-        env.start_capital_krw, env.portpolio_name = [capital ,asset_group_name]
-        env.start_date, env.end_date = [start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d')]
-        env.reblancing_rule='AW4/11'
-        env.DO_CUT_OFF = False
-        env.PRINT_TRADE_LOG = False
-        env.FIXED_EXCHANGE_RATE = False
-        env.reserve_per_period= 0
-        asset_group = Portpolio(name=asset_group_name,is_usd_krw_need=True)
-        return env, asset_group
-    '''
-    '''
-    ticker = 'SingleStock'
-    f.write("Reference:\n%s %s - %d\n"%(ticker,sim_start_date ,init_capital))
-    print("Reference:\n%s %s - %d"%(ticker,sim_start_date ,init_capital))
-    simenv, asset_group = set_simenv2(asset_group_name=ticker, capital=init_capital, start_date=sim_start_date, end_date=sim_end_date)
-    sim_partial = Simulation(portpolio=asset_group, env=simenv).Run()
-    capital = sim_partial.get_last_capital()
-    today   = sim_partial.get_last_date()
-    mmd     = np.min(sim_partial.mmd_history)
-    f.write("%s %s : %d  mmd=%.02f[%%]\n"%(ticker,today ,capital,mmd))
-    print("%s %s : %d  mmd=%.02f[%%]"%(ticker,today ,capital,mmd))
+    """
+    ====================================
+      
+    ====================================
+    """
+    if 1:
+        import matplotlib.pyplot as plt
 
+        plt.plot(daa.capital_history, label="Dual Momentum")
+        plt.plot(saa.capital_history, label="GTAA AW4/11")
+        plt.show()
 
-    num_year = ( sim_end_date.year-sim_start_date.year)
-    cagr = ((capital)/(init_capital+_iter*additional_paid_in))**(1/num_year)
-    cagr = round((cagr-1)*100,2)
-    #print(_iter,cagr, np.min(mmd_list))
-
-    import matplotlib.pyplot as plt
-    plt.plot(capital_list) 
-    plt.plot(sim_partial.capital_history, label="Dual Momentum")
-    plt.show()
-
-    plt.plot(mmd_list)
-    plt.plot(sim_partial.mmd_history, label="SPY AW4/11")
-    plt.show()
-    '''
+        plt.plot(daa.mmd_history, label="Dual Momentum")
+        plt.plot(saa.mmd_history, label="GTAA AW4/11")
+        plt.show()
