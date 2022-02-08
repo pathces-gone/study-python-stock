@@ -74,9 +74,11 @@ class SimEnvironment(SimResult):
   if 1: #Sim Data
     start_capital_krw =  10_000_000 
     start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
-    portpolio_name = 'DANTE'
+    portpolio_index = 0
+    portpolio_list  = ['DANTE']
     reserve_per_period = 0
     reblancing_rule = 'AW4/11' # 'B&H'
+    market_open_date = None
 
   if 1: # Report
     report_name = None
@@ -103,7 +105,7 @@ class Simulation(object):
     if portpolio:
       self.portpolio = portpolio
     else:
-      self.portpolio = Portpolio(env.portpolio_name)
+      self.portpolio = Portpolio(env.portpolio_list[env.portpolio_index])
 
     self.do_save = False
     if env.report_name:
@@ -643,7 +645,8 @@ if __name__ == '__main__':
   env.start_capital_krw =  12_000_000 
   env.PRINT_TRADE_LOG = False
   env.DO_CUT_OFF = False
-  env.portpolio_name = 'DANTE'
+  env.portpolio_index = 0
+  env.portpolio_list = ['DANTE']
   env.start_date, env.end_date,_ = ['2021-01-12', '2021-02-26','']
   env.report_name = None
   env.reblancing_rule='AW4/11'
