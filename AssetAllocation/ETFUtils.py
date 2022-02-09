@@ -78,13 +78,12 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
     df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']] = df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']].astype(int) 
     df['Date'] = pd.to_datetime(df['Date']) 
     ret = df.sort_values(by=['Date'], ascending=True)
-    #print("Elapsed Time : %.2f"%round(time.time()-start_time,2))
     return ret
   else:
     ticker=code
     yf.pdr_override()
     df_price = pdr.get_data_yahoo(ticker) # [Date, Open, High, Low, Close, Adj Close, Volume]
-    ret = df_price.dropna(axis=0)
+    ret = df_price.reset_index()
     return ret
 
 
