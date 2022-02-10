@@ -42,6 +42,7 @@ class ETF(object):
   def get_price(self, date):
     price_df = self.price_df
     price = 0
+    
     if type(date) == datetime.datetime: 
       next_date = date
     else:

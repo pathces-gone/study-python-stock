@@ -1,8 +1,8 @@
 SingleStock:
   VT:
-    - etf: 'SPY'
+    - etf: 'TQQQ'
       source: 'YAHOO'
-      comment: 'RPAR'
+      comment: 'TQQQ'
       ratio: 100
 
     # - etf: '200030'

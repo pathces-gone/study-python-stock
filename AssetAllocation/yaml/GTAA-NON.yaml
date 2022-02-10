@@ -5,7 +5,7 @@ GTAA-NON:
     - etf: 'SPY'
       source: 'YAHOO'
       comment: 'SPY'
-      ratio: 20
+      ratio: 35
   IEF:
     - etf: 'IEF'
       source: 'YAHOO'

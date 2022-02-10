@@ -14,7 +14,7 @@ class SimResult(object):
   """
     Simulation Result
   """
-  mmd_history     = np.array([])
+  mdd_history     = np.array([])
   capital_history = np.array([])
   date_history    = np.array([])
 
@@ -324,7 +324,7 @@ class Simulation(object):
     """
       plot array
     """
-    debug_mmd = np.array([])
+    debug_mdd = np.array([])
     debug_capital = np.array([])
     debug_date= np.array([])
 
@@ -357,6 +357,9 @@ class Simulation(object):
     etfs,ratios = self.portpolio.get_etf()
     if self.env.PRINT_TRADE_LOG:
       self.print_info()
+
+    max_capital_during_period = self.capital
+    min_capital_during_period = self.capital
 
     while(pivot_date <= dt_end_date):
       """
@@ -395,13 +398,9 @@ class Simulation(object):
           self.capital = total_sell
           _ = self.buy_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
 
-          # MDD
           earn = 0
           for k,v in self.earn.items():
             earn += v
-          draw_down = (earn)/last_capital*100
-
-          max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
 
           if self.env.PRINT_TRADE_LOG:
             print(trade_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
@@ -409,11 +408,17 @@ class Simulation(object):
           """
             Next date
           """
-          debug_mmd = np.append(debug_mmd,round(max_draw_down,2))
+          debug_mdd = np.append(debug_mdd,round(max_draw_down,2))
           debug_capital = np.append(debug_capital,round(last_capital+earn,2))
           debug_date =  np.append(debug_date,trade_date.strftime('%Y-%m-%d'))
-          max_draw_down= 0
           cutoff_flag = False
+
+          # MDD Reset
+          min_capital_during_period = last_capital
+          max_capital_during_period = last_capital
+          draw_down     = 0
+          max_draw_down = 0
+
 
           if pivot_date == trade_date:
             pivot_date = ETFUtils.get_next_date(pivot_date)
@@ -426,16 +431,17 @@ class Simulation(object):
             MDD
           """
           temp_earn = 0
-          max_draw_down= 0
           for i,etf in enumerate(etfs):
             update_hold_qtys, update_earn, update_cash, trade_date = self.sell(etf=etf, date=pivot_date.strftime('%Y-%m-%d'), percent=100)
             temp_earn += update_earn
 
           last_capital = self.capital
-          draw_down = (temp_earn)/last_capital*100
+          today_capital = self.capital + temp_earn
+          min_capital_during_period = min_capital_during_period if min_capital_during_period <= today_capital else today_capital
+          max_capital_during_period = max_capital_during_period if max_capital_during_period >= today_capital else today_capital
+          draw_down = (min_capital_during_period-max_capital_during_period)/max_capital_during_period*100
 
           max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
-
       elif reblancing_rule=='B&H':
           """
             MDD
@@ -446,7 +452,9 @@ class Simulation(object):
             temp_earn += update_earn
 
           last_capital = self.capital
-          draw_down = (temp_earn)/last_capital*100
+          min_capital_during_period = min_capital_during_period if min_capital_during_period <= today_capital else today_capital
+          max_capital_during_period = max_capital_during_period if max_capital_during_period >= today_capital else today_capital
+          draw_down = (min_capital_during_period-max_capital_during_period)/max_capital_during_period*100
 
           max_draw_down = draw_down if draw_down<max_draw_down else max_draw_down
       else:
@@ -461,7 +469,7 @@ class Simulation(object):
       if self.env.DO_CUT_OFF:
         if (max_draw_down < -10) & (cutoff_flag==False):
           if self.env.PRINT_TRADE_LOG:
-            print(pivot_date,'Cut-off!!   mmd: %2.2f%%'%max_draw_down)
+            print(pivot_date,'Cut-off!!   mdd: %2.2f%%'%max_draw_down)
           total_sell, trade_date = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
           self.capital = total_sell
           cutoff_flag = True
@@ -469,7 +477,7 @@ class Simulation(object):
       """
         Next date
       """
-      debug_mmd = np.append(debug_mmd,round(max_draw_down,2))
+      debug_mdd = np.append(debug_mdd,round(max_draw_down,2))
       debug_capital = np.append(debug_capital,round(last_capital+temp_earn,2))
       debug_date =  np.append(debug_date,trade_date.strftime('%Y-%m-%d'))
 
@@ -513,8 +521,8 @@ class Simulation(object):
       ax2 = fig.add_subplot(3,1,2)
       ax3 = fig.add_subplot(3,1,3)
 
-      ax1.plot(range(len(debug_mmd)), debug_mmd , label = 'mmd(%)')
-      ax2.plot(range(len(debug_mmd)), debug_capital, label = 'capital')
+      ax1.plot(range(len(debug_mdd)), debug_mdd , label = 'mdd(%)')
+      ax2.plot(range(len(debug_mdd)), debug_capital, label = 'capital')
       ax3.plot(df_usd_krw['Date'],df_usd_krw['Close'], label='usd-krw')
 
       plt.xticks(np.arange(0, len(df_usd_krw['Date'])+1, 30), rotation=45)
@@ -529,7 +537,7 @@ class Simulation(object):
       plt.show()
 
     sim_result = self.env
-    sim_result.mmd_history     = debug_mmd
+    sim_result.mdd_history     = debug_mdd
     sim_result.capital_history = debug_capital
     sim_result.date_history    = debug_date
     return sim_result
@@ -538,8 +546,8 @@ class Simulation(object):
 
 class SimulationReview(Simulation):
   def __init__(self, sim1:list, sim2:list):
-    sim1_name, sim1_mmd, sim1_capital, sim1_date = sim1
-    sim2_name, sim2_mmd, sim2_capital, sim2_date = sim2
+    sim1_name, sim1_mdd, sim1_capital, sim1_date = sim1
+    sim2_name, sim2_mdd, sim2_capital, sim2_date = sim2
     assert sim1_date[0] == sim2_date[0],''
     assert sim2_date[-1] == sim2_date[-1],''
 

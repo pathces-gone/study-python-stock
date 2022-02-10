@@ -1,8 +1,8 @@
-QRAFT:
+LAA:
   'Globals':
-    - etf: 'SPY'
+    - etf: 'QQQ'
       source: 'YAHOO'
-      comment: 'SPY'
+      comment: 'QQQ'
       ratio: 25
   'Longbonds':
     - etf: 'IEF'
@@ -14,3 +14,4 @@ QRAFT:
       source: 'YAHOO'
       comment: '금'
       ratio: 25
+
