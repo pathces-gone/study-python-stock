@@ -28,6 +28,11 @@ page =
 https://finance.naver.com/item/sise_day.nhn?code={code}}&page={page}
 
 
+## FRED
+
+> https://fred.stlouisfed.org/docs/api/fred/
+> https://junyoru.tistory.com/122
+
 ---
 ## Python3 Env.
 * python 3.9
