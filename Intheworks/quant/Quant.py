@@ -22,15 +22,15 @@ class QuantEngine(object):
 
     def get_quant_index(self,index:str):
         assert index in self.qitlb.keys, "%s is not member of QuantIndexTable."%index
-        if index == 'mmd':
-            self.qitlb.contents[index] = self._mmd()
+        if index == 'mdd':
+            self.qitlb.contents[index] = self._mdd()
         if index == 'sharp_ratio':
             self.qitlb.contents[index] = self._sharp_ratio()
         return self.qitlb.contents[index].get_score()
 
-    def _mmd(self):
-        return QuantIndex("mmd@min/max-1", lambda x,y: np.abs(x/y-1), [277.37,1145.66])
+    def _mdd(self):
+        return QuantIndex("mdd@min/max-1", lambda x,y: np.abs(x/y-1), [277.37,1145.66])
 
     def _sharp_ratio(self):
-        return QuantIndex("mmd@min/max-1", lambda x,y: np.abs(x/y-1), [277.37,1145.66])
+        return QuantIndex("mdd@min/max-1", lambda x,y: np.abs(x/y-1), [277.37,1145.66])
     '''

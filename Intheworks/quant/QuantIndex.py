@@ -237,8 +237,8 @@ class QuantIndex(object):
 
 if __name__ == '__main__':
   if 0:
-    mmd = QuantIndex("mmd@min/max-1", lambda x,y: np.abs(x/y-1), [277.37,1145.66])
-    print(mmd.score)
+    mdd = QuantIndex("mdd@min/max-1", lambda x,y: np.abs(x/y-1), [277.37,1145.66])
+    print(mdd.score)
 
   if 1:
     item_name = '카카오게임즈'
