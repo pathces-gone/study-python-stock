@@ -30,6 +30,7 @@ https://finance.naver.com/item/sise_day.nhn?code={code}}&page={page}
 
 ## FRED
 
+ticker search : https://fred.stlouisfed.org/
 > https://fred.stlouisfed.org/docs/api/fred/
 > https://junyoru.tistory.com/122
 
