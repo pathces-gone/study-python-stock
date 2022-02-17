@@ -33,6 +33,15 @@ https://finance.naver.com/item/sise_day.nhn?code={code}}&page={page}
 ticker search : https://fred.stlouisfed.org/
 > https://fred.stlouisfed.org/docs/api/fred/
 > https://junyoru.tistory.com/122
+> https://wikidocs.net/92086#-fill
+
+## adobe cc
+
+> https://color.adobe.com/ko/trends
+> https://pinkwink.kr/976
+
+## altair
+https://altair-viz.github.io/
 
 ---
 ## Python3 Env.
