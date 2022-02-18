@@ -30,6 +30,7 @@ class Portpolio(object):
           os.mkdir('fsdata')
         self.usd_krw = fdr.DataReader('USD/KRW')
         self.usd_krw = self.usd_krw.reset_index()
+        self.usd_krw = ETFUtils.append_missing_trading_date(self.usd_krw)
         self.usd_krw.to_csv(usd_krw_path,encoding='utf-8')
 
   @staticmethod

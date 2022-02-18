@@ -38,33 +38,33 @@ def get_prev_date(today:datetime, days:int)->datetime:
   return prev_date
 
 
+
+def append_missing_trading_date(df:pd.core.frame.DataFrame):
+  ''' Return
+    input: 
+              Date	Close	Diff	Open	High	Low	Volume
+      0	2022-02-07	10610	30	10605	10615	10585	72843
+    output:
+              Date	Close	Diff	Open	High	Low	Volume	Trade
+      0	2022-02-07	10610	30	10605	10615	10585	72843	True
+  '''
+  idx = pd.date_range(df.loc[:,'Date'].min(),df.loc[:,'Date'].max())
+  s = df.set_index('Date')
+  s = s.reindex(idx, fill_value=0)
+
+  s['Trade'] = s.apply(lambda x: x['Close'] != 0, axis=1)
+  s = s.reset_index().rename(columns={"index": "Date"})
+
+  for i in s.index:
+    if s.iloc[i,-1]==False:
+      s.iloc[i,1:-1] = s.iloc[i-1,1:-1]
+  return s
+
+
 def utils_get_price(code:str, page:int=2, source:str='NAVER'):
   """ Return
     dataframe
   """
-
-  def append_missing_trading_date(df:pd.core.frame.DataFrame):
-    ''' Return
-      input: 
-                Date	Close	Diff	Open	High	Low	Volume
-        0	2022-02-07	10610	30	10605	10615	10585	72843
-      output:
-                Date	Close	Diff	Open	High	Low	Volume	Trade
-        0	2022-02-07	10610	30	10605	10615	10585	72843	True
-    '''
-    idx = pd.date_range(df.loc[:,'Date'].min(),df.loc[:,'Date'].max())
-    s = df.set_index('Date')
-    s = s.reindex(idx, fill_value=0)
-
-    s['Trade'] = s.apply(lambda x: x['Close'] != 0, axis=1)
-    s = s.reset_index().rename(columns={"index": "Date"})
-
-    for i in s.index:
-      if s.iloc[i,-1]==False:
-        s.iloc[i,:-1] = s.iloc[i-1,:-1] 
-    return s
-
-
   def get_from_naver(ticker:str, page:int):
     ''' Return
       Dataframe [Date	Close	Diff	Open	High	Low	Volume	Trade]

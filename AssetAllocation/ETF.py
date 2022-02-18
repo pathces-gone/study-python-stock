@@ -32,27 +32,17 @@ class ETF(object):
     return mavg
 
   def get_price(self, date):
+    '''
+      Input: datetime
+      Ouput: [price, is_valid]
+        * is_valid: Trade date? True or False
+    '''
     price_df = self.price_df
-    price = 0
-    
-    if type(date) == datetime.datetime: 
-      next_date = date
-    else:
-      next_date = datetime.datetime.strptime(date,"%Y-%m-%d")
+    price = price_df.loc[price_df['Date'] == date,'Close'].values[0]
+    valid = price_df.loc[price_df['Date'] == date,'Trade'].values[0]
 
-    if not price_df.loc[price_df['Date'] == date].empty:
-      price = price_df.loc[price_df['Date'] == date]['Close'].to_list()[0]
-    else:
-      for retry in range(14):
-        next_date = ETFUtils.get_next_date(next_date);
-        cond_df = price_df.loc[price_df['Date'] == next_date.strftime('%Y-%m-%d')]
-        if not cond_df.empty:
-          price = cond_df['Close'].to_list()[0]
-          break
-    assert price!=0 , "%s : %s , %s"%(self.name, self.code ,next_date)
-      
     ret = round(price,2)
-    return ret, next_date
+    return ret, valid
 
 """
   LOCAL
@@ -60,6 +50,6 @@ class ETF(object):
 if __name__ == '__main__':
   ticker = 'SPY'
   spy = ETF(name=ticker, code=ticker, index=ticker, src='YAHOO')
-  #price = spy.get_price(date='2022-01-03')
-  #print(price)
-  spy.get_inflection(start_date='2021-06-18',end_date='2022-01-18')
+  price, valid = spy.get_price(date='2022-01-03')
+  print(price, valid)
+  #spy.get_inflection(start_date='2021-06-18',end_date='2022-01-18')

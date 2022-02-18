@@ -14,13 +14,11 @@ class SimResult(object):
   """
     Simulation Result
   """
-  mdd_history     = np.array([])
-  capital_history = np.array([])
-  date_history    = np.array([])
+  trade_log = None
 
   def get_cagr(self):
-    start_date   = self.date_history[0]
-    end_date     = self.date_history[-1]
+    start_date   = self.trade_log['Date'].iloc[0]
+    end_date     = self.trade_log['Date'].iloc[-1]
     init_capital = self.get_capital(start_date)
     last_capital = self.get_capital(end_date)
     d1 = datetime.datetime.strptime(start_date,"%Y-%m-%d")
@@ -34,8 +32,8 @@ class SimResult(object):
     return cagr
 
   def get_cmgr(self):
-    start_date   = self.date_history[0]
-    end_date     = self.date_history[-1]
+    start_date   = self.trade_log['Date'].iloc[0]
+    end_date     = self.trade_log['Date'].iloc[-1]
     init_capital = self.get_capital(start_date)
     last_capital = self.get_capital(end_date)
     d1 = datetime.datetime.strptime(start_date,"%Y-%m-%d")
@@ -49,21 +47,14 @@ class SimResult(object):
     return cmgr
 
   def get_last_date(self):
-    return datetime.datetime.strptime(self.date_history[-1],"%Y-%m-%d")
+    return datetime.datetime.strptime(self.trade_log['Date'].iloc[-1],"%Y-%m-%d")
 
   def get_last_capital(self):
     return self.capital_history[-1]
 
   def get_capital(self,date:str):
-    index = np.where(self.date_history == date)[0]
-    if index.size:
-      ret= float(self.capital_history[index])
-    else:
-      print('get_capital:  date not found')
-      """
-        TODO next date
-      """
-      ret = 0.0
+    capital = self.trade_log.loc[self.trade_log['Date'] == date,'Capital']
+    ret= float(capital)
     return ret
 
 
@@ -99,7 +90,6 @@ class Simulation(object):
   """ Return Simulation
     Simulation Root node of Portpolio (ETF chain)
   """
-  #def __init__(self, portpolio:Portpolio, capital:int, report_name:str):
   def __init__(self, portpolio:Portpolio=None, env:SimEnvironment=None):
     self.env = env
     if portpolio:
@@ -137,21 +127,22 @@ class Simulation(object):
 
 
   def buy(self, etf:ETF, date:str, percent:float)->list:
-    """ Return [last_qty, avg_price, self.cash, trade_date]
+    """ Return [last_qty, avg_price, self.cash]
 
     """
     last_qty = self.hold_qtys[etf.code]
-    curr_price, trade_date = etf.get_price(date=date)
+
+    curr_price, valid = etf.get_price(date=date)
+
     avg_price = self.avg_price[etf.code]
     if avg_price == 0:
       avg_price = curr_price
 
-    trade_date_str = trade_date.strftime('%Y-%m-%d')
     if etf.src == 'YAHOO':
       if self.env.FIXED_EXCHANGE_RATE:
         usd_krw = 1150
       else:
-        usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
+        usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==date,'Close'].values[0]
     else:
       usd_krw = 1.0
 
@@ -168,30 +159,29 @@ class Simulation(object):
         update_hold_qtys = last_qty + buy_qty
         update_avg_price = (avg_price*last_qty+curr_price_krw*buy_qty)/update_hold_qtys if update_hold_qtys else 0
         update_cash = self.cash - curr_price_krw*buy_qty
-        ret = [update_hold_qtys, update_avg_price, update_cash,trade_date]
+        ret = [update_hold_qtys, update_avg_price, update_cash]
       else:
-        ret= [last_qty, avg_price, self.cash, trade_date]
+        ret= [last_qty, avg_price, self.cash]
     else:
-      ret = [last_qty, avg_price, self.cash, trade_date]
+      ret = [last_qty, avg_price, self.cash]
     return ret
 
 
   def sell(self, etf:ETF, date:str, percent:float)->list:
-    """ Return [update_hold_qtys, update_earn, update_cash, trade_date]
+    """ Return [update_hold_qtys, update_earn, update_cash,]
 
     """
     last_qty  = int(self.hold_qtys[etf.code])
     last_earn = self.earn[etf.code]
 
-    curr_price, trade_date = etf.get_price(date=date)
+    curr_price, valid = etf.get_price(date=date)
     sell_qty = int(self.hold_qtys[etf.code]*(percent/100))
 
-    trade_date_str = trade_date.strftime('%Y-%m-%d')
     if etf.src == 'YAHOO':
       if self.env.FIXED_EXCHANGE_RATE:
         usd_krw = 1150
       else:
-        usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==trade_date_str,'Close'].to_list()[0]
+        usd_krw = self.portpolio.usd_krw.loc[self.portpolio.usd_krw['Date']==date,'Close'].values[0]
     else:
       usd_krw = 1.0
 
@@ -201,9 +191,9 @@ class Simulation(object):
       update_hold_qtys = last_qty - sell_qty
       update_earn = (curr_price_krw - self.avg_price[etf.code])*sell_qty
       update_cash = self.cash + curr_price_krw*sell_qty
-      ret = [update_hold_qtys, update_earn, update_cash, trade_date]
+      ret = [update_hold_qtys, update_earn, update_cash]
     else:
-      ret = [last_qty, last_earn, self.cash ,trade_date]
+      ret = [last_qty, last_earn, self.cash]
     return ret
 
 
@@ -215,7 +205,7 @@ class Simulation(object):
     etfs,_ = self.portpolio.get_etf()
     print('='*160)
     print('Portpoilo Info - %s'%self.portpolio.name)
-    print("%20s | %30s %20s | %10s %10s %10s %10s %10s %10s %12s"%('index','name','code', 'max(%)','ratio(%)', 'price(krw)', 'qty', 'buy', 'earn','earn_ratio'))
+    print("%20s | %30s %20s | %10s %10s %10s %10s %10s %10s %12s"%('index','name','code', 'max(%)','ratio(%)', 'price(krw)', 'qty', 'buy', 'earn','earn_yield'))
     print('-'*160)
     total_buy = 0
     for i,etf in enumerate(etfs):
@@ -226,9 +216,9 @@ class Simulation(object):
       ratios = self.curr_ratios[etf.code]
       earn = self.earn[etf.code]
       total_buy += value
-      earn_ratio = round(earn/(self.capital*max_ratio)*100*100,2)
+      earn_yield = round(earn/(self.capital*max_ratio)*100*100,2)
 
-      print("%20s | %s %20s | %10.2f %10.2f %10.2f %10d %10d %10d %12.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,max_ratio,ratios, price, qty, value,earn,earn_ratio) )
+      print("%20s | %s %20s | %10.2f %10.2f %10.2f %10d %10d %10d %12.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,max_ratio,ratios, price, qty, value,earn,earn_yield) )
     print('-'*160)
     print('Total:')
     print('\tbudget: %10d\n\t\tbuy: %10d\n\t\tcash: %10d'%(self.budgets,total_buy,self.cash))
@@ -254,7 +244,7 @@ class Simulation(object):
       print('-'*140)
       total_buy = 0
       for i,etf in enumerate(etfs):
-        update_hold_qtys, update_avg_price, update_cash, trade_date = self.buy(etf=etf, date=date, percent=100)
+        update_hold_qtys, update_avg_price, update_cash = self.buy(etf=etf, date=date, percent=100)
         self.hold_qtys[etf.code] = update_hold_qtys
         self.avg_price[etf.code] = update_avg_price
         self.cash = update_cash
@@ -267,13 +257,13 @@ class Simulation(object):
     else:
       total_buy = 0
       for i,etf in enumerate(etfs):
-        update_hold_qtys, update_avg_price, update_cash, trade_date = self.buy(etf=etf, date=date, percent=100)
+        update_hold_qtys, update_avg_price, update_cash = self.buy(etf=etf, date=date, percent=100)
         self.hold_qtys[etf.code] = update_hold_qtys
         self.avg_price[etf.code] = update_avg_price
         self.cash = update_cash
         total_buy += update_hold_qtys*update_avg_price
 
-      return total_buy,trade_date
+      return total_buy
 
 
 
@@ -292,23 +282,23 @@ class Simulation(object):
         last_qty = self.hold_qtys[etf.code]
         last_avg_price = self.avg_price[etf.code]
         curr_price, _ = etf.get_price(date=date)
-        update_hold_qtys, update_earn, update_cash, trade_date = self.sell(etf=etf, date=date, percent=100)
+        update_hold_qtys, update_earn, update_cash = self.sell(etf=etf, date=date, percent=100)
         self.hold_qtys[etf.code] = update_hold_qtys
         self.earn[etf.code] = update_earn
         self.cash = update_cash
-        earn_ratio = (curr_price-last_avg_price)/last_avg_price * 100
-        print("%20s | %s %20s | %10d %10.2f %15.2f %15.2f %10d %10d %15.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code, last_qty*last_avg_price ,ratios[i], last_avg_price ,curr_price, last_qty, curr_price*last_qty, earn_ratio))
+        earn_yield = (curr_price-last_avg_price)/last_avg_price * 100
+        print("%20s | %s %20s | %10d %10.2f %15.2f %15.2f %10d %10d %15.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code, last_qty*last_avg_price ,ratios[i], last_avg_price ,curr_price, last_qty, curr_price*last_qty, earn_yield))
       print('-'*170)
       total_sell = self.cash
       print('Total: %10d\n\n'%total_sell)
     else:
       for i,etf in enumerate(etfs):
-        update_hold_qtys, update_earn, update_cash,trade_date = self.sell(etf=etf, date=date, percent=100)
+        update_hold_qtys, update_earn, update_cash = self.sell(etf=etf, date=date, percent=100)
         self.hold_qtys[etf.code] = update_hold_qtys
         self.earn[etf.code] = update_earn
         self.cash = update_cash
         total_sell = self.cash
-    return total_sell,trade_date
+    return total_sell
 
 
   def Run(self):
@@ -318,15 +308,10 @@ class Simulation(object):
     start_date      = self.env.start_date
     end_date        = self.env.end_date
     reblancing_rule = self.env.reblancing_rule
-    dt_start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
-    dt_end_date = datetime.datetime.strptime(end_date,"%Y-%m-%d")
+    dt_start_date   = datetime.datetime.strptime(start_date,"%Y-%m-%d")
+    dt_end_date     = datetime.datetime.strptime(end_date,"%Y-%m-%d")
+    trade_log = pd.DataFrame([],columns=['Date', 'MDD', 'Capital','Earn','Yield'])
 
-    """
-      plot array
-    """
-    debug_mdd = np.array([])
-    debug_capital = np.array([])
-    debug_date= np.array([])
 
     """
     =========================================================================
@@ -339,21 +324,15 @@ class Simulation(object):
     additional_paid_in = self.env.reserve_per_period
 
     pivot_date = dt_start_date
-
     last_reblance_day = pivot_date
-    if reblancing_rule=='AW4/11':
-      AW_4  = datetime.datetime.strptime('2000-04-30',"%Y-%m-%d") 
-      AW_11 = datetime.datetime.strptime('2000-11-30',"%Y-%m-%d")
-      s_year = pivot_date.year
-      s_year_4 = 0
-      s_year_11 = 0
+    today_capital = 0
 
     """
     =========================================================================
                           Trading Start 
     ========================================================================= 
     """
-    total_buy, trade_date = self.buy_portpolio(date=start_date)
+    total_buy = self.buy_portpolio(date=start_date)
     etfs,ratios = self.portpolio.get_etf()
     if self.env.PRINT_TRADE_LOG:
       self.print_info()
@@ -368,71 +347,58 @@ class Simulation(object):
       ========================================================================= 
       """
       if reblancing_rule=='AW4/11':
-        if s_year != pivot_date.year:
-          s_year =  pivot_date.year
-          s_year_4 = 0
-          s_year_11 = 0
-
-        AW_4_  = ((trade_date-AW_4).days  - (trade_date.year-AW_4.year)*365) + 1
-        AW_11_ = ((trade_date-AW_11).days - (trade_date.year-AW_11.year)*365) + 1
-
-        if((s_year_4==0 and (0<=AW_4_<3)) | (s_year_11==0 and(0<=AW_11_<3))):
-          s_year_4 = (4> AW_4_ >= 0)
-          s_year_11= (4>AW_11_ >= 0)
-
-          if 1: # cma 이자
-            cma_days = (pivot_date-last_reblance_day).days
-            cma=(self.cash*(0.012)/365) * cma_days
-            #print('이자: %d -> %d [%d]'%(self.cash,cma,cma_days))
-            self.cash += cma
-            last_reblance_day = pivot_date
-
-          count += 1
-          self.cash += additional_paid_in
-          last_capital = self.capital + additional_paid_in
+        AW_4_  = (pivot_date.month==4)  and  (pivot_date.day == 28)
+        AW_11_ = (pivot_date.month==11) and  (pivot_date.day == 28)
+        pivot_date_str = pivot_date.strftime('%Y-%m-%d')
+        if (AW_4_ or AW_11_):
+          last_capital = self.capital
 
           # Reblancing
-          total_sell,trade_date = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
-          earn_ratio = round((total_sell-last_capital)/last_capital*100,2)
+          ## 1. Sell All
+          total_sell = self.sell_portpolio(date=pivot_date_str)
 
-          self.capital = total_sell
-          _ = self.buy_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
+          ## 2. Additional Paid-In
+          count += 1
+          self.capital = total_sell + additional_paid_in
 
+          ## 3. Buy All
+          _ = self.buy_portpolio(date=pivot_date_str)
+
+
+          # Report
           earn = 0
           for k,v in self.earn.items():
             earn += v
+          earn_yield = round((total_sell-last_capital)/last_capital*100,2)
+
 
           if self.env.PRINT_TRADE_LOG:
-            print(trade_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
+            print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_yield,max_draw_down))
 
           """
             Next date
           """
-          debug_mdd = np.append(debug_mdd,round(max_draw_down,2))
-          debug_capital = np.append(debug_capital,round(last_capital+earn,2))
-          debug_date =  np.append(debug_date,trade_date.strftime('%Y-%m-%d'))
+          reblancing_results = pd.DataFrame(
+            [[pivot_date_str,round(max_draw_down,2),round(self.capital,2), earn, earn_yield]],
+            columns=['Date', 'MDD', 'Capital','Earn','Yield'])
+          trade_log = pd.concat([trade_log,reblancing_results])
           cutoff_flag = False
-
+ 
           # MDD Reset
-          min_capital_during_period = last_capital
-          max_capital_during_period = last_capital
+          min_capital_during_period = self.capital
+          max_capital_during_period = self.capital
           draw_down     = 0
           max_draw_down = 0
 
-
-          if pivot_date == trade_date:
-            pivot_date = ETFUtils.get_next_date(pivot_date)
-          else:
-            pivot_date = ETFUtils.get_next_date(trade_date)
-          continue
-
+          pivot_date = ETFUtils.get_next_date(pivot_date)
+    
         else:
           """
             MDD
           """
           temp_earn = 0
           for i,etf in enumerate(etfs):
-            update_hold_qtys, update_earn, update_cash, trade_date = self.sell(etf=etf, date=pivot_date.strftime('%Y-%m-%d'), percent=100)
+            update_hold_qtys, update_earn, update_cash = self.sell(etf=etf, date=pivot_date.strftime('%Y-%m-%d'), percent=100)
             temp_earn += update_earn
 
           last_capital = self.capital
@@ -448,10 +414,11 @@ class Simulation(object):
           """
           temp_earn = 0
           for i,etf in enumerate(etfs):
-            update_hold_qtys, update_earn, update_cash, trade_date = self.sell(etf=etf, date=pivot_date.strftime('%Y-%m-%d'), percent=100)
+            update_hold_qtys, update_earn, update_cash = self.sell(etf=etf, date=pivot_date.strftime('%Y-%m-%d'), percent=100)
             temp_earn += update_earn
 
           last_capital = self.capital
+          today_capital = self.capital + temp_earn
           min_capital_during_period = min_capital_during_period if min_capital_during_period <= today_capital else today_capital
           max_capital_during_period = max_capital_during_period if max_capital_during_period >= today_capital else today_capital
           draw_down = (min_capital_during_period-max_capital_during_period)/max_capital_during_period*100
@@ -465,26 +432,30 @@ class Simulation(object):
                               Strategy end 
       ========================================================================= 
       """
-
       if self.env.DO_CUT_OFF:
         if (max_draw_down < -10) & (cutoff_flag==False):
           if self.env.PRINT_TRADE_LOG:
             print(pivot_date,'Cut-off!!   mdd: %2.2f%%'%max_draw_down)
-          total_sell, trade_date = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
+          total_sell = self.sell_portpolio(date=pivot_date.strftime('%Y-%m-%d'))
           self.capital = total_sell
           cutoff_flag = True
 
       """
         Next date
       """
-      debug_mdd = np.append(debug_mdd,round(max_draw_down,2))
-      debug_capital = np.append(debug_capital,round(last_capital+temp_earn,2))
-      debug_date =  np.append(debug_date,trade_date.strftime('%Y-%m-%d'))
+      
+      reblancing_results = pd.DataFrame(
+        [[pivot_date_str,round(max_draw_down,2),round(today_capital,2), temp_earn, round(temp_earn/self.capital,2)]],
+        columns=['Date', 'MDD', 'Capital','Earn','Yield'])
+      trade_log = pd.concat([trade_log,reblancing_results])
 
-      if pivot_date == trade_date:
-        pivot_date = ETFUtils.get_next_date(pivot_date)
-      else:
-        pivot_date = ETFUtils.get_next_date(trade_date)
+      if 1: # cma 이자
+        cma=(self.cash*(0.012)/365)
+        #print('이자: %d -> %d '%(self.cash,cma))
+        self.cash += cma
+
+      pivot_date = ETFUtils.get_next_date(pivot_date)
+
 
     """
     =========================================================================
@@ -500,12 +471,12 @@ class Simulation(object):
         Sell All at the end date
       """
       last_capital = self.capital
-      total_sell, trade_date = self.sell_portpolio(date=end_date)
-      earn_ratio = round((total_sell-last_capital)/last_capital*100,2)
+      total_sell = self.sell_portpolio(date=end_date)
+      earn_yield = round((total_sell-last_capital)/last_capital*100,2)
 
       self.budgets += count*additional_paid_in
       if self.env.PRINT_TRADE_LOG:
-        print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_ratio,max_draw_down))
+        print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%]'%(last_capital,total_sell, earn_yield,max_draw_down))
         self.print_info()
 
     if self.env.RESULT_PLOT:
@@ -521,9 +492,17 @@ class Simulation(object):
       ax2 = fig.add_subplot(3,1,2)
       ax3 = fig.add_subplot(3,1,3)
 
-      ax1.plot(range(len(debug_mdd)), debug_mdd , label = 'mdd(%)')
-      ax2.plot(range(len(debug_mdd)), debug_capital, label = 'capital')
-      ax3.plot(df_usd_krw['Date'],df_usd_krw['Close'], label='usd-krw')
+      x= trade_log['Date']
+
+      ax1.plot(x, trade_log['MDD'], label = 'mdd(%)')
+      ax2.plot(x, trade_log['Capital'], label = 'capital')
+
+      s1 = datetime.datetime.strftime(x.iloc[0],"%Y-%m-%d")
+      s2 = datetime.datetime.strftime(x.iloc[-1],"%Y-%m-%d")
+      cat_x = df_usd_krw.loc[(df_usd_krw['Date'] >= s1) & (df_usd_krw['Date'] <= s2),'Date']
+      cat_y = df_usd_krw.loc[(df_usd_krw['Date'] >= s1) & (df_usd_krw['Date'] <= s2),'Close']
+
+      ax3.plot(cat_x,cat_y, label='usd-krw')
 
       plt.xticks(np.arange(0, len(df_usd_krw['Date'])+1, 30), rotation=45)
 
@@ -537,9 +516,7 @@ class Simulation(object):
       plt.show()
 
     sim_result = self.env
-    sim_result.mdd_history     = debug_mdd
-    sim_result.capital_history = debug_capital
-    sim_result.date_history    = debug_date
+    sim_result.trade_log = trade_log.reset_index(drop=True)
     return sim_result
 
 
@@ -591,58 +568,6 @@ class SimulationReview(Simulation):
     corr_df = ranging_df.corr(method='pearson')
     print(corr_df)
 
-  def get_inflection(self,start_date:str=None, end_date:str=None):
-    raw_df = self.raw_df
-
-    st = raw_df['Date'].iloc[0] if start_date == None else start_date
-    ed = raw_df['Date'].iloc[-1]  if end_date == None else end_date
-
-    df = raw_df[(st<=raw_df['Date']) & (raw_df['Date']<=ed)].iloc[::-1]
-    df_close = df['sim1']
-
-    inflection = pd.DataFrame(columns=['Date', 'High', 'Low'])
-    inflection['Date'] = df['Date']
-    inflection['Point'] = [0 for _ in range(len(df['Date']))]
-    
-    forward1 = df_close.iloc[1:]
-    forward2 = df_close.iloc[2:]
-
-    df_index = df_close.index
-    min_ = df_index[-1]+2
-    max_ = df_index[0]-1
-
-    for i in df_index:
-      if min_ < i < max_:
-        c = df_close.loc[i]
-        f1 = forward1.loc[i-1]
-        f2 = forward2.loc[i-2]
-        if c < f1:
-          if f1 > f2:
-            inflection['High'].loc[i-1] = f1
-
-        if c > f1:
-          if f1 < f2:
-            inflection['Low'].loc[i-1] = f1
-
-    
-    inflection['High'].replace(0, np.nan, inplace=True)
-    inflection['Low'].replace(0, np.nan, inplace=True)
-    
-    import matplotlib.pyplot as plt
-    plt.figure(figsize=FIGSIZE)
-    plt.plot(df_close)
-    plt.plot(inflection['High'],'bo')
-    plt.plot(inflection['Low'],'ro')
-    #plt.hlines(inflection['Point'],xmin=7150,xmax=7300)
-    
-  def get_vix(self, start_date:str=None, end_date:str=None):
-    """
-      TODO
-    """
-    ticker = 'VIXM'
-    vix = ETF(name=ticker, code=ticker, index=ticker, src='YAHOO')
-    vix.get_chart(start_date=start_date ,end_date=end_date)
-
 
 """
 =========================================================================
@@ -652,13 +577,15 @@ class SimulationReview(Simulation):
 if __name__ == '__main__':
   env = SimEnvironment()
   env.start_capital_krw =  12_000_000 
-  env.PRINT_TRADE_LOG = False
+  env.PRINT_TRADE_LOG = True
   env.DO_CUT_OFF = False
   env.portpolio_index = 0
   env.portpolio_list = ['DANTE']
-  env.start_date, env.end_date,_ = ['2021-01-12', '2021-02-26','']
+  env.start_date, env.end_date,_ = ['2021-01-12', '2022-02-10','']
   env.report_name = None
   env.reblancing_rule='AW4/11'
+  env.RESULT_PLOT =False
+  #env.reblancing_rule='B&H'
 
   sim1 = Simulation(env=env).Run()
   print(sim1.get_capital(date=env.end_date))
