@@ -31,14 +31,6 @@ class ETF(object):
     mavg  = price_low.rolling(window=window).mean()
     return mavg
 
-  def get_chart(self, start_date:str, end_date:str):
-    #print(self.price_df)
-    df = self.price_df.loc[
-              (self.price_df['Date'] >= start_date) & (self.price_df['Date'] <= end_date)
-              ,:]
-    #print(df)
-    ETFUtils.plot_candle_chart(df)
-
   def get_price(self, date):
     price_df = self.price_df
     price = 0
