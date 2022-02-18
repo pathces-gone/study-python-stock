@@ -41,14 +41,12 @@ if __name__ == '__main__':
     end_date="2019-02-02"
 
 
-
-
     #sim1_assets = {'GTAA-NON':'GTAA-NON'}
     sim1_assets = {'QRAFT':'QRAFT'}
     sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date=start_date,end_date=end_date)  
     sim1_result = StaticAA().Run(sim_assets=sim1_assets, sim_env=sim1_env)
     print(sim1_result.get_cagr())
-    print(np.min(sim1_result.mdd_history))
+    print(np.min(sim1_result.trade_log['MDD']))
 
 
     if 1:
@@ -56,19 +54,19 @@ if __name__ == '__main__':
       sim2_env    = set_simenv(asset_list=sim2_assets,capital=10_000_000,start_date=start_date,end_date=end_date)  
       sim2_result = StaticAA().Run(sim_assets=sim2_assets, sim_env=sim2_env)
       print(sim2_result.get_cagr())
-      print(np.min(sim2_result.mdd_history))
+      print(np.min(sim2_result.trade_log['MDD']))
 
-      if 1:
+      if 0:
         import matplotlib.pyplot as plt
         plt.figure(figsize=[16,10])
-        plt.semilogy(sim1_result.capital_history,  label="%s AW4/11"%(list(sim1_assets.keys())[0]))
-        plt.semilogy(sim2_result.capital_history,  label="%s AW4/11"%(list(sim2_assets.keys())[0]))
+        plt.semilogy(sim1_result.trade_log['Capital'],  label="%s AW4/11"%(list(sim1_assets.keys())[0]))
+        plt.semilogy(sim2_result.trade_log['Capital'],  label="%s AW4/11"%(list(sim2_assets.keys())[0]))
         plt.yscale("log")
         plt.legend()
         plt.show()
 
         plt.figure(figsize=[16,10])
-        plt.plot(sim1_result.mdd_history,  label="%s AW4/11"%(list(sim1_assets.keys())[0]))
-        plt.plot(sim2_result.mdd_history,  label="%s AW4/11"%(list(sim2_assets.keys())[0]))
+        plt.plot(sim1_result.trade_log['MDD'],  label="%s AW4/11"%(list(sim1_assets.keys())[0]))
+        plt.plot(sim2_result.trade_log['MDD'],  label="%s AW4/11"%(list(sim2_assets.keys())[0]))
         plt.legend()
         plt.show()

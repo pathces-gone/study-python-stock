@@ -2,6 +2,7 @@ import numpy as np
 import yaml, os, types
 import datetime
 from dateutil import relativedelta
+import pandas as pd
 
 import ETFUtils
 from ETF import ETF
@@ -249,8 +250,6 @@ class SlowTactical(Stratgy):
         ratio = ratio_score[index]
 
         ret = [list(assets.keys()).index('AGG'),0,BUY,1]
-        #if ticker == 'AGG':
-        #    ret = [0,0,SELL,1]
         if abs[index]:
             ret = [0, index, BUY, ratio]
 
@@ -347,59 +346,66 @@ class DynamicAA(Simulation):
         mdd_list = np.array([])
         _iter = 0
         additional_paid_in = 0
+        trade_log = pd.DataFrame([],columns=['Date', 'MDD', 'Capital','Earn','Yield','Trade'])
 
-        with open(os.path.join('sim-result','%s-%s-%s.txt'%(tactic,sim_start_date ,init_capital)),'w') as f:
-            while 1:
-                next_month = next_date_func(today=today)
-                which_group, ticker_index, is_buy, ratio = tactic_func(sim_assets_dict, today)
-                partial_end_date = next_month if next_month < sim_end_date else sim_end_date
+        while 1:
+            next_month = next_date_func(today=today)
+            which_group, ticker_index, is_buy, ratio = tactic_func(sim_assets_dict, today)
+            partial_end_date = next_month if next_month < sim_end_date else sim_end_date
+
+
+            input_capital             = round(ratio,4)*capital
+            sim_env.portpolio_index   = ticker_index
+            sim_env.start_capital_krw = input_capital
+            sim_env.start_date        = today.strftime('%Y-%m-%d')
+            sim_env.end_date          = partial_end_date.strftime('%Y-%m-%d')
+            sim_portpolio             = Portpolio(name=sim_env.portpolio_list[which_group+ticker_index], is_usd_krw_need=True)
   
-                if is_buy:
-                    input_capital             = round(ratio,4)*capital
-                    sim_env.portpolio_index   = ticker_index
-                    sim_env.start_capital_krw = input_capital
-                    sim_env.start_date        = today.strftime('%Y-%m-%d')
-                    sim_env.end_date          = partial_end_date.strftime('%Y-%m-%d')
-                    sim_portpolio             = Portpolio(name=sim_env.portpolio_list[which_group+ticker_index], is_usd_krw_need=True)
-                    sim_partial               = Simulation(portpolio=sim_portpolio, env=sim_env).Run()
+            if is_buy:
+                sim_env.reblancing_rule   = 'B&H'
+                sim_partial               = Simulation(portpolio=sim_portpolio, env=sim_env).Run()
+            else:
+                sim_env.reblancing_rule   = 'Nothing'
+                sim_partial               = Simulation(portpolio=sim_portpolio, env=sim_env).Run()
 
-                    capital      = sim_partial.get_last_capital() + (capital-input_capital)
-                    today        = sim_partial.get_last_date()  + relativedelta.relativedelta(days=1)
-                    mdd          = np.min(sim_partial.mdd_history)
-                    mdd_list     = np.append(mdd_list, sim_partial.mdd_history)
-                    capital_list = np.append(capital_list, sim_partial.capital_history + (capital-input_capital))
+            capital      = sim_partial.get_last_capital() + (capital-input_capital)
+            today        = sim_partial.get_last_date()  + relativedelta.relativedelta(days=1)
+            mdd          = sim_partial.trade_log['MDD'].min()
+            trade_log    = pd.concat([trade_log, sim_partial.trade_log])
+            if is_buy:
+              print("%14s %s : %d  mdd=%.02f[%%]"%(sim_env.portpolio_list[which_group+ticker_index],today ,capital,mdd))
+            else:
+              print("%14s %s : %d  mdd=%.02f[%%]"%('Cutoff',today ,capital,0))
+            capital += additional_paid_in
+            _iter +=1
+            if partial_end_date == sim_end_date:
+                break
 
-                    f.write("%4s %s : %d  mdd=%.02f[%%]\n"%(sim_env.portpolio_list[which_group+ticker_index],today ,capital,mdd))
-                    print("%4s %s : %d  mdd=%.02f[%%]"%(sim_env.portpolio_list[which_group+ticker_index],today ,capital,mdd))
-                else:
-                    days = len(market_open_date.loc[(today.strftime('%Y-%m-%d')<=market_open_date) & (market_open_date<partial_end_date.strftime('%Y-%m-%d'))])
-                    mdd_list     = np.append(mdd_list,    np.ones(days)*mdd_list[-1])
-                    capital_list = np.append(capital_list,np.ones(days)*capital_list[-1])
-                    today        = partial_end_date
-                    print("%4s %s : %d"%('SELL',today ,capital))
-
-                capital += additional_paid_in
-                _iter +=1
-                if partial_end_date == sim_end_date:
-                    break
-
-            num_year = ( sim_end_date.year-sim_start_date.year)
-            cagr = 0
-            if num_year > 0:
-                cagr = ((capital)/(init_capital+_iter*additional_paid_in))**(1/num_year)
-                cagr = round((cagr-1)*100,2)
-            print('Simulation Done.\nITER: %d, CAGR: %4.02f[%%] MMD:%4.02f[%%]\n'%(_iter,cagr, np.min(mdd_list)))
-
-            """
-            =========================================================================
-                                  Strategy End & Reference
-            ========================================================================= 
-            """
+        """
+        =========================================================================
+                              Strategy End & Reference
+        ========================================================================= 
+        """
+        def post_process(df):
+          idx = pd.date_range(df['Date'].min(),df['Date'].max())
+          s = df.set_index('Date')
+          s = s.reindex(idx, fill_value=0)
+          s = s.reset_index().rename(columns={"index": "Date"})
+          for i in s.index:
+            if s.iloc[i,-1]==False:
+              s.iloc[i,-1] = False
+          return s
 
         sim_result = SimResult()
-        sim_result.mdd_history = mdd_list
-        sim_result.capital_history = capital_list
-        sim_result.date_history = np.array([]) #TODO
+        sim_result.trade_log = post_process(trade_log)
+        #print(sim_result.trade_log)
+        num_year = (sim_end_date.year-sim_start_date.year)
+        cagr = 0
+        if num_year > 0:
+            cagr = ((capital)/(init_capital+_iter*additional_paid_in))**(1/num_year)
+            cagr = round((cagr-1)*100,2)
+
+        print('Simulation Done.\nITER: %d, CAGR: %4.02f[%%] MMD:%4.02f[%%]\n'%(_iter,cagr, sim_result.trade_log['MDD'].min()))
         return sim_result
 
 
@@ -422,7 +428,7 @@ if __name__ == '__main__':
         env.portpolio_list  = asset_yamls
         env.start_capital_krw = capital
         env.start_date, env.end_date = [start_date, end_date]
-        env.reblancing_rule='AW4/11'
+        env.reblancing_rule='B&H'
         env.market_open_date = ETFUtils.get_trading_date(ticker='SPY')
 
         env.DO_CUT_OFF = False
@@ -431,67 +437,66 @@ if __name__ == '__main__':
         return env
   
     start_date="2019-01-03"
-    end_date  ="2019-02-02"
+    end_date  ="2020-02-21"
 
     sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','AGG':'AGG'}}
     ##sim1_assets = {'Aggressive':{'QRFT':'QRFT','EFA':'EFA','AGG':'AGG'}}
     sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date=start_date,end_date=end_date)
     daa1 = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='DualMomentum')
 
-    sim2_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
-    #sim1_assets = {'Aggressive':{'QRFT':'QRFT','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
-    sim2_env    = set_simenv(asset_list=sim2_assets,capital=10_000_000,start_date=start_date,end_date=end_date)
-    daa2 = DynamicAA().Run(sim_assets=sim2_assets, sim_env=sim2_env, tactic='VAA_aggressive')
+    if 1:
+        sim2_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
+        #sim1_assets = {'Aggressive':{'QRFT':'QRFT','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
+        sim2_env    = set_simenv(asset_list=sim2_assets,capital=10_000_000,start_date=start_date,end_date=end_date)
+        daa2 = DynamicAA().Run(sim_assets=sim2_assets, sim_env=sim2_env, tactic='VAA_aggressive')
+
+        """
+        ====================================
+                Reference: Static AA
+        ====================================
+        """
+        def set_simenv(asset_list:dict, capital:int, start_date:str, end_date:str):
+            asset_names = asset_list.keys()
+            asset_yamls = [os.path.join(name) for name in asset_names] 
+
+            env = SimEnvironment()
+            env.portpolio_index = 0
+            env.portpolio_list = asset_yamls
+            env.start_capital_krw = 10_000_000
+            env.start_date, env.end_date = [start_date, end_date]
+            env.reblancing_rule = 'AW4/11'
+            env.market_open_date = ETFUtils.get_trading_date(ticker='SPY')
+
+            env.DO_CUT_OFF = False
+            env.PRINT_TRADE_LOG = True
+            env.FIXED_EXCHANGE_RATE = False
+            return env
+
+        sim3_assets = {'DANTE':'DANTE'}
+        sim3_env    = set_simenv(asset_list=sim3_assets,capital=10_000_000,start_date=start_date,end_date=end_date)
+        saa = StaticAA().Run(sim_assets=sim3_assets, sim_env=sim3_env)
 
 
-
-    """
-    ====================================
-            Reference: Static AA
-    ====================================
-    """
-    def set_simenv(asset_list:dict, capital:int, start_date:str, end_date:str):
-        asset_names = asset_list.keys()
-        asset_yamls = [os.path.join(name) for name in asset_names] 
-
-        env = SimEnvironment()
-        env.portpolio_index = 0
-        env.portpolio_list = asset_yamls
-        env.start_capital_krw = 10_000_000
-        env.start_date, env.end_date = [start_date, end_date]
-        env.reblancing_rule = 'AW4/11'
-        env.market_open_date = ETFUtils.get_trading_date(ticker='SPY')
-
-        env.DO_CUT_OFF = False
-        env.PRINT_TRADE_LOG = True
-        env.FIXED_EXCHANGE_RATE = False
-        return env
-
-    sim3_assets = {'DANTE':'DANTE'}
-    sim3_env    = set_simenv(asset_list=sim3_assets,capital=10_000_000,start_date=start_date,end_date=end_date)
-    saa = StaticAA().Run(sim_assets=sim3_assets, sim_env=sim3_env)
+        import matplotlib.pyplot as plt
+        plt.figure(figsize=[16,10])
+        plt.semilogy(daa1.trade_log['Capital'], label="Dual Momentum")
+        plt.semilogy(daa2.trade_log['Capital'], label="VAA")
+        plt.semilogy(saa.trade_log['Capital'],  label="%s AW4/11"%(list(sim3_assets.keys())[0]))
+        
+        avg_c = daa1.trade_log['Capital']  +  daa2.trade_log['Capital'] +saa.trade_log['Capital'] #
+        avg_c = avg_c/3
+        plt.semilogy(avg_c,label='avg')
+        plt.legend()
+        #plt.show()
 
 
-    import matplotlib.pyplot as plt
-    plt.figure(figsize=[16,10])
-    plt.semilogy(daa1.capital_history, label="Dual Momentum")
-    plt.semilogy(daa2.capital_history, label="VAA")
-    plt.semilogy(saa.capital_history,  label="%s AW4/11"%(list(sim3_assets.keys())[0]))
-    
-    avg_c = daa1.capital_history  +  daa2.capital_history +saa.capital_history #
-    avg_c = avg_c/3
-    plt.semilogy(avg_c,label='avg')
-    plt.legend()
-    plt.show()
+        plt.figure(figsize=[16,10])
+        plt.plot(daa1.trade_log['MDD'], label="Dual Momentum")
+        plt.plot(daa2.trade_log['MDD'], label="VAA")
+        plt.plot(saa.trade_log['MDD'],  label="%s AW4/11"%(list(sim3_assets.keys())[0]))
 
-
-    plt.figure(figsize=[16,10])
-    plt.plot(daa1.mdd_history, label="Dual Momentum")
-    plt.plot(daa2.mdd_history, label="VAA")
-    plt.plot(saa.mdd_history,  label="%s AW4/11"%(list(sim3_assets.keys())[0]))
-
-    avg_m = daa1.mdd_history  + saa.mdd_history + daa2.mdd_history#
-    avg_m = avg_m/3
-    plt.plot(avg_m, label='avg')
-    plt.legend()
-    plt.show()
+        avg_m = daa1.trade_log['MDD']  + saa.trade_log['MDD'] + daa2.trade_log['MDD']#
+        avg_m = avg_m/3
+        plt.plot(avg_m, label='avg')
+        plt.legend()
+        #plt.show()

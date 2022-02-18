@@ -22,7 +22,7 @@ if __name__ == '__main__':
   plt.axhline(y=0)
   plt.legend()
   plt.show()
-  #dgs10_2.to_csv('10_2_spread')
+  #dgs10_2.to_csv('10_2_spread', index=False)
   #
 
 

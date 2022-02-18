@@ -2,7 +2,7 @@ import yaml, os, datetime, requests
 import numpy as np
 import ETFUtils
 import pandas as pd
-
+import datetime
 
 class ETF(object):
   """ Return ETF
@@ -19,8 +19,7 @@ class ETF(object):
       price_df = pd.read_csv(self.path)
     else:
       price_df = ETFUtils.utils_get_price(code=self.code,page=500,source=src)
-      price_df.to_csv(self.path,encoding='utf-8')
-
+      price_df.to_csv(self.path,encoding='utf-8', index=False)
     self.price_df = price_df
 
   def get_mavg(self, criteria:str, window:int):
@@ -31,16 +30,20 @@ class ETF(object):
     mavg  = price_low.rolling(window=window).mean()
     return mavg
 
-  def get_price(self, date):
+  def get_price(self, date:datetime.date):
     '''
-      Input: datetime
+      Input: datetime.datetime
       Ouput: [price, is_valid]
         * is_valid: Trade date? True or False
     '''
     price_df = self.price_df
-    price = price_df.loc[price_df['Date'] == date,'Close'].values[0]
-    valid = price_df.loc[price_df['Date'] == date,'Trade'].values[0]
+    if type(date) != str:
+      date_str = date.strftime('%Y-%m-%d')
+    else:
+      date_str = date
 
+    price = price_df.loc[price_df['Date'] == date_str,'Close'].values[0]
+    valid = price_df.loc[price_df['Date'] == date_str,'Trade'].values[0]
     ret = round(price,2)
     return ret, valid
 
