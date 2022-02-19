@@ -1,8 +1,8 @@
 QRAFT:
   'Globals':
-    - etf: 'SPY'
+    - etf: 'QQQ'
       source: 'YAHOO'
-      comment: 'SPY'
+      comment: 'QQQ'
       ratio: 25
   'Longbonds':
     - etf: 'IEF'

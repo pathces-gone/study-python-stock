@@ -326,7 +326,7 @@ class DynamicAA(Simulation):
 
         if tactic == 'DualMomentum':
             tactic_func = SlowTactical.DualMomentum
-            next_date_func = get_next_day # get_next_month
+            next_date_func = get_next_month
         elif tactic == 'VAA_aggressive':
             tactic_func = FastTactial.VAA_aggressive
             next_date_func = get_next_day
@@ -346,7 +346,7 @@ class DynamicAA(Simulation):
         mdd_list = np.array([])
         _iter = 0
         additional_paid_in = 0
-        trade_log = pd.DataFrame([],columns=['Date', 'MDD', 'Capital','Earn','Yield','Trade'])
+        trade_log = pd.DataFrame([],columns=self.trade_log_columns)
 
         while 1:
             next_month = next_date_func(today=today)
