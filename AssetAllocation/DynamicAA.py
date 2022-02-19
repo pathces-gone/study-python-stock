@@ -315,7 +315,7 @@ class DynamicAA(Simulation):
             return nextmonth
 
         def get_next_day(today:datetime):
-            nextday = today + relativedelta.relativedelta(days=7)
+            nextday = today + relativedelta.relativedelta(days=14)
             return nextday
 
         sim_start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
@@ -397,6 +397,7 @@ class DynamicAA(Simulation):
           return s
 
         sim_result = SimResult()
+        sim_result.sim_name = tactic
         sim_result.trade_log = post_process(trade_log)
         #print(sim_result.trade_log)
         num_year = (sim_end_date.year-sim_start_date.year)

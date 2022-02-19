@@ -14,7 +14,22 @@ class SimResult(object):
   """
     Simulation Result
   """
-  trade_log = None
+  sim_name = 'sim1'
+  trade_log = None 
+  trade_log_columns=('Date', 'MDD', 'Capital','Earn','Yield', 'Trade')
+
+  def average_result(self, sim_results:np.ndarray):
+    self.sim_name = "Avg"
+    avg_date    = sim_results[0].trade_log['Date']
+    avg_mdd     = np.array([s.trade_log['MDD'] for s in sim_results]).sum(axis=0)/len(sim_results)
+    avg_capital = np.array([s.trade_log['Capital'] for s in sim_results]).sum(axis=0)/len(sim_results)
+    avg_earn    = np.array([s.trade_log['Earn'] for s in sim_results]).sum(axis=0)/len(sim_results)
+    avg_yield   = np.array([s.trade_log['Yield'] for s in sim_results]).sum(axis=0)/len(sim_results)
+    avg_trade   = np.repeat(False,len(avg_date))
+    avg = pd.DataFrame([],columns=self.trade_log_columns)
+    avg = avg.assign(Date=avg_date, MDD=avg_mdd, Capital=avg_capital,Earn=avg_earn, Yield=avg_yield, Trade=avg_trade)
+    self.trade_log = avg
+    
 
   def get_cagr(self):
     start_date   = self.trade_log['Date'].iloc[0]
@@ -88,7 +103,7 @@ class SimEnvironment(SimResult):
 
 
 
-class Simulation(object):
+class Simulation(SimEnvironment):
   """ Return Simulation
     Simulation Root node of Portpolio (ETF chain)
   """
@@ -316,7 +331,7 @@ class Simulation(object):
     reblancing_rule = self.env.reblancing_rule
     dt_start_date   = datetime.datetime.strptime(start_date,"%Y-%m-%d")
     dt_end_date     = datetime.datetime.strptime(end_date,"%Y-%m-%d")
-    trade_log = pd.DataFrame([],columns=['Date', 'MDD', 'Capital','Earn','Yield','Trade'])
+    trade_log = pd.DataFrame([],columns=self.trade_log_columns)
 
 
     """
@@ -387,7 +402,7 @@ class Simulation(object):
           """
           reblancing_results = pd.DataFrame(
             [[pivot_date,round(max_draw_down,2),round(self.capital,2), earn, earn_yield, valid]],
-            columns=['Date', 'MDD', 'Capital','Earn','Yield', 'Trade'])
+            columns=self.trade_log_columns)
           trade_log = pd.concat([trade_log,reblancing_results])
           cutoff_flag = False
  
@@ -462,7 +477,7 @@ class Simulation(object):
   
       reblancing_results = pd.DataFrame(
         [[pivot_date,round(max_draw_down,2),round(today_capital,2), temp_earn, round(temp_earn/self.capital,2),valid]],
-        columns=['Date', 'MDD', 'Capital','Earn','Yield', 'Trade'])
+        columns=self.trade_log_columns)
       trade_log = pd.concat([trade_log,reblancing_results])
 
       pivot_date = ETFUtils.get_next_date(pivot_date)

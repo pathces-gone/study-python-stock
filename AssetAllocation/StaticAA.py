@@ -13,9 +13,10 @@ class StaticAA(Simulation):
     def __init__(self):
         pass
     
-    def Run(self, sim_assets:dict ,sim_env:SimEnvironment):
+    def Run(self, sim_assets:dict ,sim_env:SimEnvironment, tactic:str='sim1'):
         sim_portpolio = Portpolio(name=sim_env.portpolio_list[0], is_usd_krw_need=True)
         sim_result    = Simulation(portpolio=sim_portpolio, env=sim_env).Run()
+        sim_result.sim_name = tactic
         return sim_result #SimResult
 
 
