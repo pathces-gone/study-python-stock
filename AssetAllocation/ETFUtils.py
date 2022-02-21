@@ -91,6 +91,7 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
 
     df['mvg13'] = df['Close'].rolling(window=13).mean()
     df['mvg55'] = df['Close'].rolling(window=55).mean()
+    df['mvg224'] = df['Close'].rolling(window=224).mean()
 
     idx = pd.date_range(df.loc[:,'Date'].min(),df.loc[:,'Date'].max())
     df = df.set_index('Date')
@@ -119,6 +120,7 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
 
     df_price['mvg13'] = df_price['Close'].rolling(window=13).mean()
     df_price['mvg55'] = df_price['Close'].rolling(window=55).mean()
+    df_price['mvg224'] = df_price['Close'].rolling(window=224).mean()
 
     df_price = append_missing_trading_date(df_price)
     return df_price

@@ -70,6 +70,26 @@ class MomentumScore(object):
         score = np.matmul(weight, momentums_for_month)# 1x4  4xetfs = 1xetfs
         return score
 
+
+    @staticmethod
+    def mvg_momentum_score(etfs:list[ETF], today:datetime, months:int=None, score_func:types.LambdaType=None):
+        """ Return list[float]
+          주봉
+          55평선 : 모멘텀
+          13평선 : 추세
+        """
+        today = today.strftime('%Y-%m-%d')
+
+        etf_data_vec = pd.DataFrame([], columns=['Close','mvg224'])
+        for etf in etfs:
+          vec = etf.price_df.loc[etf.price_df['Date']==today, ['Close','mvg224']]
+          etf_data_vec = pd.concat([etf_data_vec,vec])
+
+        etf_data_vec['score'] = etf_data_vec.iloc[:,0] >= etf_data_vec.iloc[:,1]
+        score = etf_data_vec['score'].to_list()
+        return score
+
+
 class Momentum(MomentumScore):
     def __init__(self, asset_yaml_names:list[str]):
         self.asset_yaml_names = asset_yaml_names
@@ -88,9 +108,10 @@ class Momentum(MomentumScore):
             etfs = np.append(etfs, _etfs)
         etfs = etfs.squeeze()
         #score = MomentumScore.classic_momentum_score(etfs=etfs,today=today, months=12, score_func=lambda x,y: x<y)
-        score = MomentumScore.vaa_momentum_score(etfs=etfs,today=today)
-        score = score > 0
-        return score.astype(bool)
+        #score = MomentumScore.vaa_momentum_score(etfs=etfs,today=today)
+        #score = score > 0
+        score = MomentumScore.mvg_momentum_score(etfs=etfs,today=today)
+        return score
 
     
     def relative_momentum(self, today:datetime):
@@ -244,12 +265,11 @@ class SlowTactical(Stratgy):
 
         rel, ratio_score = momentum.relative_momentum(today=today)
         abs = momentum.abs_momentum( today=today)
-
         ticker = assets_inv.get(rel)
         index = list(assets.keys()).index(ticker)
         ratio = ratio_score[index]
 
-        ret = [list(assets.keys()).index('AGG'),0,BUY,1]
+        ret = [list(assets.keys()).index('AGG'),0,SELL,1]
         if abs[index]:
             ret = [0, index, BUY, ratio]
 
@@ -311,11 +331,11 @@ class DynamicAA(Simulation):
         market_open_date = sim_env.market_open_date
 
         def get_next_month(today:datetime):
-            nextmonth = today + relativedelta.relativedelta(months=1) #months=1 #
+            nextmonth = today + relativedelta.relativedelta(months=1)
             return nextmonth
 
         def get_next_day(today:datetime):
-            nextday = today + relativedelta.relativedelta(days=14)
+            nextday = today + relativedelta.relativedelta(days=7)
             return nextday
 
         sim_start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
@@ -434,11 +454,11 @@ if __name__ == '__main__':
 
         env.DO_CUT_OFF = False
         env.PRINT_TRADE_LOG = False
-        env.FIXED_EXCHANGE_RATE = False
+        env.FIXED_EXCHANGE_RATE = True
         return env
   
-    start_date="2019-01-03"
-    end_date  ="2020-02-21"
+    start_date= "2010-01-23"
+    end_date  = "2017-02-03"
 
     sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','AGG':'AGG'}}
     ##sim1_assets = {'Aggressive':{'QRFT':'QRFT','EFA':'EFA','AGG':'AGG'}}
