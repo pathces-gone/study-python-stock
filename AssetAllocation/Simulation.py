@@ -1,5 +1,6 @@
 from audioop import avg
 from matplotlib.pyplot import draw, figure
+from dateutil import relativedelta
 import yaml
 import os, datetime, requests
 import numpy as np
@@ -30,7 +31,6 @@ class SimResult(object):
     avg = avg.assign(Date=avg_date, MDD=avg_mdd, Capital=avg_capital,Earn=avg_earn, Yield=avg_yield, Trade=avg_trade)
     self.trade_log = avg
     
-
   def get_cagr(self):
     start_date   = self.trade_log['Date'].iloc[0]
     end_date     = self.trade_log['Date'].iloc[-1]
@@ -60,6 +60,25 @@ class SimResult(object):
     else:
       cmgr=0.00
     return cmgr
+
+  def get_mdd_per_month(self):
+    df = self.trade_log
+    start_date   = df['Date'].iloc[0]
+    end_date     = df['Date'].iloc[-1]
+
+    #start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
+    #end_date   = datetime.datetime.strptime(end_date,"%Y-%m-%d")
+    
+    d1 = start_date
+    d2 = end_date
+
+    window = 30
+    df_window = df.loc[(df['Date']>=d1.strftime('%Y-%m-%d')) & (df['Date']<d2.strftime('%Y-%m-%d')) , 'Capital']
+    max_price = df_window.rolling(window=window, min_periods=1).max()
+    min_price = df_window.rolling(window=window, min_periods=1).min()
+    max_dd = ((min_price/max_price) - 1.0 )*100.0
+
+    return max_dd
 
   def get_last_date(self):
     return self.trade_log['Date'].iloc[-1]

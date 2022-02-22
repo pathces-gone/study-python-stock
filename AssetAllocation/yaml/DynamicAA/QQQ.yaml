@@ -1,0 +1,6 @@
+DynamicAA/QQQ:
+  QQQ:
+    - etf: 'QQQ'
+      comment: ''
+      source: 'YAHOO'
+      ratio: 100

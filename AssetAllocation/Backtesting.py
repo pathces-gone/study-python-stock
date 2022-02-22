@@ -114,16 +114,15 @@ if __name__ == '__main__':
               Init
     =====================================
     """
-    start_date= "2017-01-23"
-    end_date  = "2017-02-03"
+    start_date= "2010-01-02"
+    end_date  = "2022-02-17"
     capital  = 10_000_000
 
     sims= [
-        #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA','AGG':'AGG'}}],
-        #['Dynamic','VAA_aggressive',{'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}],
-        #['Static', 'SPY', {'DynamicAA/SPY':'DynamicAA/SPY'}],
-        ['Static', 'LAA', {'LAA':'LAA'}],
-
+        #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ'},'Conservative':{'AGG':'AGG'}}],
+        ['Dynamic','VAA_aggressive',{'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}],
+        ['Static', 'SPY', {'DynamicAA/SPY':'DynamicAA/SPY'}],
+        #['Static', 'LAA', {'LAA':'LAA'}],
     ]
     
     """
@@ -137,7 +136,6 @@ if __name__ == '__main__':
         env = AssetAllocateEnv(AssetAllocateType=sim[0], Tactic=sim[1], AssetGroup=sim[2])
         sim_result = Backtest(start_date=start_date, end_date=end_date, capital=capital).Run(env)
         sim_result.trade_log['Date'] = sim_result.trade_log['Date'].apply(pd.to_datetime) 
-        print(sim_result.trade_log['Date'] )
         sim_results = np.append(sim_results,sim_result)
         plots = np.append(plots,Backtest.get_altair_chart(sim_result))
 
@@ -155,4 +153,17 @@ if __name__ == '__main__':
         width=16*30,
         height=10*30
     )
-    lines.show()
+    #lines.show()
+
+
+    """
+    =====================================
+              Avg
+    =====================================
+    """
+    mdds = [sr.get_mdd_per_month() for sr in sim_results]
+    avg_mdd = avg_result.get_mdd_per_month()
+    
+    plt.plot(mdds[0])
+    plt.plot(mdds[1])
+#    plt.plot(avg_mdd)
