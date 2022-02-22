@@ -115,15 +115,16 @@ if __name__ == '__main__':
               Init
     =====================================
     """
-    start_date= "2005-01-23"
+
+    start_date= "2010-01-02"
     end_date  = "2022-02-17"
-    capital   = 10_000_000
+    capital  = 10_000_000
 
     sims= [
-        ['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ','AGG':'AGG'}}],
+        #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ'},'Conservative':{'AGG':'AGG'}}],
         ['Dynamic','VAA_aggressive',{'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}],
-        #['Static', 'AW4/11', {'DANTE':'DANTE'}],
-        ['Static', 'LAA', {'LAA':'LAA'}],
+        ['Static', 'SPY', {'DynamicAA/SPY':'DynamicAA/SPY'}],
+        #['Static', 'LAA', {'LAA':'LAA'}],
     ]
     
     """
@@ -136,6 +137,7 @@ if __name__ == '__main__':
     for sim in sims:
         env = AssetAllocateEnv(AssetAllocateType=sim[0], Tactic=sim[1], AssetGroup=sim[2])
         sim_result = Backtest(start_date=start_date, end_date=end_date, capital=capital).Run(env)
+        sim_result.trade_log['Date'] = sim_result.trade_log['Date'].apply(pd.to_datetime) 
         sim_results = np.append(sim_results,sim_result)
         plots = np.append(plots,Backtest.get_altair_chart(sim_result))
 
@@ -151,6 +153,20 @@ if __name__ == '__main__':
     """
     alt.data_transformers.disable_max_rows()
     lines= np.sum(plots).properties(
-        width=16*60,
-        height=10*60
-    ).show()
+        width=16*30,
+        height=10*30
+    )
+    #lines.show()
+
+
+    """
+    =====================================
+              Avg
+    =====================================
+    """
+    mdds = [sr.get_mdd_per_month() for sr in sim_results]
+    avg_mdd = avg_result.get_mdd_per_month()
+    
+    plt.plot(mdds[0])
+    plt.plot(mdds[1])
+#    plt.plot(avg_mdd)

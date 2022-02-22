@@ -89,6 +89,10 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
     df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']] = df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']].astype(int) 
     df['Date'] = pd.to_datetime(df['Date']) 
 
+    df['mvg13'] = df['Close'].rolling(window=13).mean()
+    df['mvg55'] = df['Close'].rolling(window=55).mean()
+    df['mvg224'] = df['Close'].rolling(window=224).mean()
+
     idx = pd.date_range(df.loc[:,'Date'].min(),df.loc[:,'Date'].max())
     df = df.set_index('Date')
 
@@ -113,6 +117,11 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
     yf.pdr_override()
     df_price = pdr.get_data_yahoo(ticker)
     df_price = df_price.reset_index()
+
+    df_price['mvg13'] = df_price['Close'].rolling(window=13).mean()
+    df_price['mvg55'] = df_price['Close'].rolling(window=55).mean()
+    df_price['mvg224'] = df_price['Close'].rolling(window=224).mean()
+
     df_price = append_missing_trading_date(df_price)
     return df_price
 
@@ -142,8 +151,8 @@ def get_trading_date(ticker:str):
   LOCAL
 """
 if __name__ == '__main__':
-  print(utils_get_price(code='261240', page=10, source='NAVER'))
-  print(utils_get_price(code='SPY', page=10, source='YAHOO'))
+  #print(utils_get_price(code='261240', page=100, source='NAVER'))
+  print(utils_get_price(code='SPY', page=10, source='YAHOO').iloc[-30:-1])
   #ret = get_trading_date('SPY')
   #print(ret)
   #ret=ret.loc[('2019-01-03'<=ret) & (ret<'2020-01-03')]
