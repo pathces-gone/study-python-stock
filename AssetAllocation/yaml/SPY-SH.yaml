@@ -1,10 +1,14 @@
-SingleStock:
-  VT:
+SPY-SH:
+  SPY:
     - etf: 'SPY'
       source: 'YAHOO'
       comment: 'SPY'
-      ratio: 100
-
+      ratio: 80
+  SH:
+    - etf: 'SH'
+      source: 'YAHOO'
+      comment: 'inv'
+      ratio: 20
     # - etf: '200030'
     #   source: 'NAVER'
     #   comment: 'KODEX 미국S&P산업재(합성)'

@@ -17,6 +17,7 @@ class StaticAA(Simulation):
         sim_portpolio = Portpolio(name=sim_env.portpolio_list[0], is_usd_krw_need=True)
         sim_result    = Simulation(portpolio=sim_portpolio, env=sim_env).Run()
         sim_result.sim_name = tactic
+        print(sim_result.get_cagr())
         return sim_result #SimResult
 
 
@@ -38,19 +39,19 @@ if __name__ == '__main__':
       env.FIXED_EXCHANGE_RATE = False
       return env
 
-    start_date="2014-11-01"
-    end_date="2019-02-02"
+    start_date="2021-11-01"
+    end_date="2022-02-02"
 
 
     #sim1_assets = {'GTAA-NON':'GTAA-NON'}
-    sim1_assets = {'QRAFT':'QRAFT'}
+    sim1_assets = {'MyPortpolio':'MyPortpolio'}
     sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date=start_date,end_date=end_date)  
     sim1_result = StaticAA().Run(sim_assets=sim1_assets, sim_env=sim1_env)
     print(sim1_result.get_cagr())
     print(np.min(sim1_result.trade_log['MDD']))
 
 
-    if 1:
+    if 0:
       sim2_assets = {'DANTE':'DANTE'}
       sim2_env    = set_simenv(asset_list=sim2_assets,capital=10_000_000,start_date=start_date,end_date=end_date)  
       sim2_result = StaticAA().Run(sim_assets=sim2_assets, sim_env=sim2_env)

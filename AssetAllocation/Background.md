@@ -175,3 +175,10 @@
 
 
 분배금 스케쥴
+
+# cutoff를 rolling mdd로 진행
+# 랜덤데이 이익스프레드~
+
+# Simulation()의 cut-off 정하기
+
+# Dynamic -> prev_trade_log 전달하고 55평선 구해서 cut-off 하기

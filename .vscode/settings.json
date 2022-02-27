@@ -1,0 +1,12 @@
+{
+    "jupyter.kernels.filter": [
+        {
+            "path": "/usr/bin/python",
+            "type": "pythonEnvironment"
+        },
+        {
+            "path": "/usr/bin/python3",
+            "type": "pythonEnvironment"
+        }
+    ]
+}

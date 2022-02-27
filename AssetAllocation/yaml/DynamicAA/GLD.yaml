@@ -1,0 +1,6 @@
+DynamicAA/GLD:
+  GLD:
+    - etf: 'GLD'
+      comment: 골드'
+      source: 'YAHOO'
+      ratio: 100

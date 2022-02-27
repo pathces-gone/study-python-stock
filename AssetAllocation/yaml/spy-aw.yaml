@@ -1,8 +1,8 @@
-LAA:
+spy-aw:
   'Globals':
-    - etf: 'QQQ'
+    - etf: 'SPY'
       source: 'YAHOO'
-      comment: 'QQQ'
+      comment: 'SPY'
       ratio: 25
   'Longbonds':
     - etf: 'IEF'

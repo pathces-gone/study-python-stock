@@ -1,0 +1,6 @@
+DynamicAA/DIA:
+  DIA:
+    - etf: 'DIA'
+      comment: '다우존스'
+      source: 'YAHOO'
+      ratio: 100

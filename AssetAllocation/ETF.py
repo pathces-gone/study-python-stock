@@ -18,7 +18,7 @@ class ETF(object):
     if os.path.exists(self.path):
       price_df = pd.read_csv(self.path)
     else:
-      price_df = ETFUtils.utils_get_price(code=self.code,page=500,source=src)
+      price_df = ETFUtils.utils_get_price(code=self.code,page=10,source=src)
       price_df.to_csv(self.path,encoding='utf-8', index=False)
     self.price_df = price_df
 
@@ -41,7 +41,6 @@ class ETF(object):
       date_str = date.strftime('%Y-%m-%d')
     else:
       date_str = date
-
     price = price_df.loc[price_df['Date'] == date_str,'Close'].values[0]
     valid = price_df.loc[price_df['Date'] == date_str,'Trade'].values[0]
     ret = round(price,2)
@@ -51,8 +50,14 @@ class ETF(object):
   LOCAL
 """
 if __name__ == '__main__':
-  ticker = 'SPY'
-  spy = ETF(name=ticker, code=ticker, index=ticker, src='YAHOO')
+  # ticker = 'DIA'
+  # spy = ETF(name=ticker, code=ticker, index=ticker, src='YAHOO')
+  # price, valid = spy.get_price(date='2022-01-03')
+  # print(price, valid)
+  # #spy.get_inflection(start_date='2021-06-18',end_date='2022-01-18')
+
+
+  ticker = 'DGS10'
+  spy = ETF(name=ticker, code=ticker, index=ticker, src='FRED')
   price, valid = spy.get_price(date='2022-01-03')
   print(price, valid)
-  #spy.get_inflection(start_date='2021-06-18',end_date='2022-01-18')

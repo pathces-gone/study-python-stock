@@ -1,0 +1,6 @@
+DynamicAA/BND:
+  BND:
+    - etf: 'BND'
+      comment: '카나리아1'
+      source: 'YAHOO'
+      ratio: 100

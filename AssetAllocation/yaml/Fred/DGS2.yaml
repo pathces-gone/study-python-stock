@@ -1,0 +1,6 @@
+Fred/DGS2:
+  DGS2:
+    - etf: 'DGS2'
+      comment: '미채권2년 금리'
+      source: 'FRED'
+      ratio: 100

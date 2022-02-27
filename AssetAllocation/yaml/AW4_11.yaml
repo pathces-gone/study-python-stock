@@ -1,9 +1,17 @@
-LAA:
+AW4_11:
   'Globals':
     - etf: 'QQQ'
       source: 'YAHOO'
       comment: 'QQQ'
-      ratio: 25
+      ratio: 9
+    - etf: 'SPY'
+      source: 'YAHOO'
+      comment: 'SPY'
+      ratio: 9
+    - etf: 'DIA'
+      source: 'YAHOO'
+      comment: 'DIA'
+      ratio: 9
   'Longbonds':
     - etf: 'IEF'
       source: 'YAHOO'

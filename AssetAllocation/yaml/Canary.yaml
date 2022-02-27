@@ -1,0 +1,12 @@
+Canary:
+  'VWO':
+    - etf: 'VWO'
+      source: 'YAHOO'
+      comment: 'VWO'
+      ratio: 50
+  'BND':
+    - etf: 'BND'
+      source: 'YAHOO'
+      comment: 'BND'
+      ratio: 50
+

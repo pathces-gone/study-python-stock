@@ -1,0 +1,6 @@
+DynamicAA/SH:
+  SH:
+    - etf: 'SH'
+      comment: 'spy inv'
+      source: 'YAHOO'
+      ratio: 100

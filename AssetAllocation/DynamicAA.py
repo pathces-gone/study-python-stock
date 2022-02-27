@@ -49,10 +49,10 @@ class MomentumScore(object):
 
         etf_data_vec = pd.DataFrame([], columns=COLUMN)
         for etf in etfs:
-          v1 = etf.price_df.loc[etf.price_df['Date']==today, COLUMN].reset_index(drop=True)
-          v2 = etf.price_df.loc[etf.price_df['Date']==prev_date, COLUMN].reset_index(drop=True)
-          vec = (v1-v2)/v2*100
-          etf_data_vec = pd.concat([etf_data_vec, vec])
+            v1 = etf.price_df.loc[etf.price_df['Date']==today, COLUMN].reset_index(drop=True)
+            v2 = etf.price_df.loc[etf.price_df['Date']==prev_date, COLUMN].reset_index(drop=True)
+            vec = (v1-v2)/v2*100
+            etf_data_vec = pd.concat([etf_data_vec, vec])
         max_idx = etf_data_vec.reset_index(drop=True)['Close'].apply(pd.to_numeric).idxmax()
         score = np.zeros(len(etfs))
         score[max_idx] = 1
@@ -91,9 +91,9 @@ class MomentumScore(object):
         """
         today = today.strftime('%Y-%m-%d')
 
-        etf_data_vec = pd.DataFrame([], columns=['Close','mvg224'])
+        etf_data_vec = pd.DataFrame([], columns=['Close','mvg55'])
         for etf in etfs:
-          vec = etf.price_df.loc[etf.price_df['Date']==today, ['Close','mvg224']]
+          vec = etf.price_df.loc[etf.price_df['Date']==today, ['Close','mvg55']]
           etf_data_vec = pd.concat([etf_data_vec,vec])
 
         etf_data_vec['score'] = etf_data_vec.iloc[:,0] >= etf_data_vec.iloc[:,1]
@@ -109,15 +109,15 @@ class MomentumScore(object):
         prev_date = prev_date.strftime('%Y-%m-%d')
         today = today.strftime('%Y-%m-%d')
 
-        etf_data_vec = pd.DataFrame([], columns=['Close','mvg224'])
+        etf_data_vec = pd.DataFrame([], columns=['Close','mvg55'])
+
         for etf in etfs:
-          v1 = etf.price_df.loc[etf.price_df['Date']==today, ['Close','mvg224']].reset_index(drop=True)
-          v2 = etf.price_df.loc[etf.price_df['Date']==prev_date, ['Close','mvg224']].reset_index(drop=True)
+          v1 = etf.price_df.loc[etf.price_df['Date']==today, ['Close','mvg55']].reset_index(drop=True)
+          v2 = etf.price_df.loc[etf.price_df['Date']==prev_date, ['Close','mvg55']].reset_index(drop=True)
           vec =(v1-v2)/v2*100
           etf_data_vec = pd.concat([etf_data_vec,vec])
 
         etf_data_vec['score'] = etf_data_vec.iloc[:,1] > 1.1  #224
-        #print(etf_data_vec)
         score = etf_data_vec['score'].to_list()
         return score
 
@@ -145,7 +145,22 @@ class Momentum(MomentumScore):
         score = MomentumScore.abs_momentum_score(etfs=etfs,today=today)
         return score
 
-    
+
+    def mvg_momentum(self, today:datetime):
+        """ Return [*Momentums]
+           
+        """
+        portpolio_list = self.portpolio_list
+
+        etfs = np.array([])
+        for asset in portpolio_list:
+            _etfs,_ = asset.get_etf()
+            etfs = np.append(etfs, _etfs)
+        etfs = etfs.squeeze()
+
+        score = MomentumScore.mvg_momentum_score(etfs=etfs,today=today)
+        return score
+
     def relative_momentum(self, today:datetime):
         """ Return list[(ticker, ratio_score)]
 
@@ -187,8 +202,6 @@ class Momentum(MomentumScore):
 
 class Stratgy(Momentum):
     pass
-
-
 
 class FastTactial(Stratgy):
     @staticmethod
@@ -263,12 +276,24 @@ class PrimarilyPassive(Stratgy):
 class SlowTactical(Stratgy):
     @staticmethod
     def items():
-        ITEMS = ['CompositeDualMomentum','DualMomentum']
+        ITEMS = ['CompositeDualMomentum','DualMomentum','SHY_SMG224']
         return {'SlowTatical':ITEMS}
 
     @staticmethod
     def CompositeDualMomentum():
         pass
+
+    @staticmethod
+    def SHY_SMG224(assets:dict, today:datetime):
+        agg_list = list(assets['Aggressive'].keys())
+        agg = Momentum(agg_list)
+
+        mvg = agg.mvg_momentum(today=today)
+
+        ret = [0, 1, SELL, 1]
+        if mvg[0]:
+            ret = [0, 0, BUY, 1]
+        return ret
 
     @staticmethod
     def DualMomentum(assets:dict, today:datetime):
@@ -285,11 +310,10 @@ class SlowTactical(Stratgy):
         agg_index = agg_list.index(rel)
         ratio = ratio_score[agg_index]
 
+        ret = [len(agg_list),0,con.abs_momentum( today=today)[0],1]
 
-        ret = [len(agg_list),0,BUY,1]
         if abs[agg_index]:
             ret = [0, agg_index, BUY, ratio]
-
         return ret
 
 
@@ -320,6 +344,30 @@ class DynamicAA(Simulation):
 
         assert onload_tactic != None, 'tactic not found'
         return onload_tactic
+
+    def which_one_buy_today(self, sim_assets:dict ,sim_env:SimEnvironment, tactic:str='DualMomentum'):
+
+        if tactic == 'DualMomentum':
+            tactic_func = SlowTactical.DualMomentum
+        elif tactic == 'SHY_SMG224':
+            tactic_func = SlowTactical.SHY_SMG224
+        elif tactic == 'VAA_aggressive':
+            tactic_func = FastTactial.VAA_aggressive
+        else:
+            tactic_func = SlowTactical.DualMomentum
+
+        today = datetime.datetime.today() - relativedelta.relativedelta(days=5)
+        sim_assets_dict = sim_assets
+        which_group, ticker_index, is_buy, ratio = tactic_func(sim_assets_dict, today)
+
+    
+        if which_group >0:
+            group = sim_assets['Conservative']
+        else:
+            group = sim_assets['Aggressive']
+        
+        print(today," - %s: %s"%('BUY' if is_buy else 'SELL',list(group.values())[ticker_index]))
+        pass
 
 
     def Run(self, sim_assets:dict ,sim_env:SimEnvironment, tactic:str='DualMomentum'):
@@ -352,7 +400,7 @@ class DynamicAA(Simulation):
             return nextmonth
 
         def get_next_day(today:datetime):
-            nextday = today + relativedelta.relativedelta(days=14) - relativedelta.relativedelta(days=1)
+            nextday = today + relativedelta.relativedelta(days=7) - relativedelta.relativedelta(days=1)
             return nextday
 
         sim_start_date = datetime.datetime.strptime(start_date,"%Y-%m-%d")
@@ -364,6 +412,9 @@ class DynamicAA(Simulation):
         if tactic == 'DualMomentum':
             tactic_func = SlowTactical.DualMomentum
             next_date_func = get_next_month
+        elif tactic == 'SHY_SMG224':
+            tactic_func = SlowTactical.SHY_SMG224
+            next_date_func = get_next_month   
         elif tactic == 'VAA_aggressive':
             tactic_func = FastTactial.VAA_aggressive
             next_date_func = get_next_month #get_next_day
@@ -411,7 +462,7 @@ class DynamicAA(Simulation):
             if is_buy:
               print("%14s %s : %d  mdd=%.02f[%%]"%(sim_env.portpolio_list[which_group+ticker_index],today ,capital,mdd))
             else:
-              print("%14s %s : %d  mdd=%.02f[%%]"%('Cutoff',today ,capital,0))
+              print("%14s %s : %d  mdd=%.02f[%%]"%('Cash',today ,capital,0))
             capital += additional_paid_in
             _iter +=1
             if partial_end_date == sim_end_date:
@@ -473,11 +524,15 @@ if __name__ == '__main__':
         env.FIXED_EXCHANGE_RATE = True
         return env
   
-    start_date= "2017-02-01"
-    end_date  = "2022-02-02"
+    start_date= "2010-05-01"
+    end_date  = "2022-01-01"
 
-    ##sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ'},'Conservative':{'AGG':'AGG'}}
-    sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
+    sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ'},'Conservative':{'AGG':'AGG'}}
+    #sim1_assets = {'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}
+    #sim1_assets = {'Aggressive':{'SPY':'SPY','SH':'SH'}}
     sim1_env    = set_simenv(asset_list=sim1_assets,capital=10_000_000,start_date=start_date,end_date=end_date)
-    #daa1 = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='DualMomentum')
-    daa1 = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='VAA_aggressive')
+    #daa1 = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='SHY_SMG224')
+    #daa1 = DynamicAA().Run(sim_assets=sim1_assets, sim_env=sim1_env, tactic='VAA_aggressive')
+
+    sim1_assets =    {'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ','DIA':'DIA'},'Conservative':{'IEF':'IEF'}}
+    DynamicAA().which_one_buy_today(sim_assets=sim1_assets, sim_env=sim1_env, tactic='DualMomentum')

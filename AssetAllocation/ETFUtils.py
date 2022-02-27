@@ -1,4 +1,6 @@
 import unicodedata, requests, time, datetime, os
+import numpy as np
+from pyparsing import col
 import pandas as pd
 from pandas.core.frame import DataFrame
 from pandas.core.series import Series
@@ -7,7 +9,7 @@ from bs4 import BeautifulSoup as bs
 import yfinance as yf
 from mplfinance.original_flavor import candlestick2_ohlc
 import matplotlib.pyplot as plt
-
+from fredapi import Fred
 
 def preformat_cjk (string, width, align='<', fill=' '):
   """
@@ -65,10 +67,27 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
   """ Return
     dataframe
   """
+  def get_from_fred(ticker:str, page:int=0):
+    ''' Return
+      Output: [Date, Close]
+    '''
+    start = '1970-01-03'
+    end   = datetime.datetime.today().strftime("%Y-%m-%d")
+
+    fred = Fred(api_key= os.environ.get('FRED_KEY'))
+    ret = fred.get_series(ticker,observation_start=start, observation_end=end)
+    ret = pd.DataFrame(ret).reset_index(drop=False)
+    ret = ret.rename(columns={'index':'Date', 0:'Close'}).dropna()
+    ret = append_missing_trading_date(ret)
+    ret['Trade'] = True
+    return ret
+
+
   def get_from_naver(ticker:str, page:int):
     ''' Return
       Dataframe [Date	Close	Diff	Open	High	Low	Volume	Trade]
     '''
+    print('Download - %s'%ticker)
     url = 'http://finance.naver.com/item/sise_day.nhn?code={code}'.format(code=ticker)
     def get_html_table(url:str):
       headers =  {'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.96 Safari/537.36'}
@@ -84,7 +103,7 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
       df = pd.concat([df,pd.read_html(html_table, header=0)[0]],axis=0,ignore_index=True)
     assert df.empty == False, "the requested dataframe is empty."
     df = df.dropna(axis=0)
-    
+
     df = df.rename(columns= {'날짜': 'Date', '종가': 'Close', '전일비': 'Diff', '시가': 'Open', '고가': 'High', '저가': 'Low', '거래량': 'Volume'}) 
     df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']] = df[['Close', 'Diff', 'Open', 'High', 'Low', 'Volume']].astype(int) 
     df['Date'] = pd.to_datetime(df['Date']) 
@@ -93,18 +112,22 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
     df['mvg55'] = df['Close'].rolling(window=55).mean()
     df['mvg224'] = df['Close'].rolling(window=224).mean()
 
-    idx = pd.date_range(df.loc[:,'Date'].min(),df.loc[:,'Date'].max())
+
     df = df.set_index('Date')
+
+    df = df.loc[~df.index.duplicated(keep='first')] # 중복제거
+    idx = pd.date_range(df.index.min(),df.index.max())
 
     s = df
     s = s.reindex(idx, fill_value=0)
 
     s['Trade'] = s.apply(lambda x: x['Close'] != 0, axis=1)
-    s = s.reset_index().rename(columns={"index": "Date"})
+    s = s.reset_index()
+    s= s.rename(columns={"index": "Date"})
 
     for i in s.index:
       if s.iloc[i,-1]==False:
-        s.iloc[i,:-1] = s.iloc[i-1,:-1] 
+        s.iloc[i,1:-1] = s.iloc[i-1,1:-1] 
 
     ret = s.sort_values(by=['Date'], ascending=True)
     return ret
@@ -118,9 +141,9 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
     df_price = pdr.get_data_yahoo(ticker)
     df_price = df_price.reset_index()
 
-    df_price['mvg13'] = df_price['Close'].rolling(window=13).mean()
-    df_price['mvg55'] = df_price['Close'].rolling(window=55).mean()
-    df_price['mvg224'] = df_price['Close'].rolling(window=224).mean()
+    df_price['mvg13'] = df_price['Low'].rolling(window=13).mean()
+    df_price['mvg55'] = df_price['Low'].rolling(window=55).mean()
+    df_price['mvg224'] = df_price['Low'].rolling(window=224).mean()
 
     df_price = append_missing_trading_date(df_price)
     return df_price
@@ -129,6 +152,8 @@ def utils_get_price(code:str, page:int=2, source:str='NAVER'):
     pasring_func = get_from_naver
   elif source == 'YAHOO':
     pasring_func = get_from_yahoo
+  elif source == 'FRED':
+    pasring_func = get_from_fred
   else:
     pasring_func = None
   
@@ -151,8 +176,9 @@ def get_trading_date(ticker:str):
   LOCAL
 """
 if __name__ == '__main__':
-  #print(utils_get_price(code='261240', page=100, source='NAVER'))
-  print(utils_get_price(code='SPY', page=10, source='YAHOO').iloc[-30:-1])
+  #print(utils_get_price(code='411060', page=12, source='NAVER'))
+  #print(utils_get_price(code='SPY', page=10, source='YAHOO').iloc[-30:-1])
+  print(utils_get_price(code='DGS10', page=0, source='FRED'))
   #ret = get_trading_date('SPY')
   #print(ret)
   #ret=ret.loc[('2019-01-03'<=ret) & (ret<'2020-01-03')]

@@ -1,0 +1,6 @@
+Fred/DGS10:
+  DGS10:
+    - etf: 'DGS10'
+      comment: '미채권10년 금리'
+      source: 'FRED'
+      ratio: 100

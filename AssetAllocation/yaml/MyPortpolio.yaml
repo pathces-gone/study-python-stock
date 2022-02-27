@@ -1,31 +1,16 @@
-MyPortpolio:
-  'Globals':
-    - etf: '251350'
-      comment: 'KODEX 선진국MSCI World'
+'MyPortpolio':
+  'MyQQQ':
+    - etf: '379810'
+      comment: 'KODEX나스닥100TR'
       source: 'NAVER'
-      ratio: 35
-  'Longbonds':
-    - etf: '305080'
+      ratio: 25
+  'MyGold':
+    - etf: '411060' #'319640'
+      comment: 'KINDEXKRX금현물' #'TIGER 골드선물(H)'
       source: 'NAVER'
-      comment: 'TIGER 미국채10년선물'
-      ratio: 20
-  'Debenture':
-    - etf: '332610'
-      source: 'NAVER'
-      comment: 'ARIRANG 미국장기우량회사채'
-      ratio: 7.5
-  'Emerging Futures':
-    - etf: '152380'
-      source: 'NAVER'
-      comment: 'KODEX 국채선물10년'
-      ratio: 7.5
-  'Gold':
-    - etf: '319640'
-      comment: 'TIGER 골드선물(H)'
-      source: 'NAVER'
-      ratio: 5
-  'Materials':
-    - etf: '/DBC'
-      source: 'NAVER'
-      comment: '원자재'
-      ratio: 5
+      ratio: 25
+  # 'MyBond':
+  #   - etf: '308620'
+  #     comment: 'KODEX 미국채10년선물'
+  #     source: 'NAVER'
+  #     ratio: 25

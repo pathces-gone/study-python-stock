@@ -1,0 +1,6 @@
+DynamicAA/VWO:
+  VWO:
+    - etf: 'VWO'
+      comment: '카나리아2'
+      source: 'YAHOO'
+      ratio: 100
