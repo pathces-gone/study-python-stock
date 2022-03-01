@@ -484,6 +484,8 @@ class Simulation(SimEnvironment):
           total_sell,valid = self.sell_portpolio(date=pivot_date)
           self.capital = total_sell
           cutoff_flag = True
+      else:
+        loss_cut = np.NaN
 
       """
         Next date
