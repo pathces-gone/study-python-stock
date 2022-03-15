@@ -1,0 +1,6 @@
+DynamicAA/DBC:
+  DBC:
+    - etf: 'DBC'
+      comment: '원자재'
+      source: 'YAHOO'
+      ratio: 100

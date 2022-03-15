@@ -17,7 +17,7 @@ class StaticAA(Simulation):
         sim_portpolio = Portpolio(name=sim_env.portpolio_list[0], is_usd_krw_need=True)
         sim_result    = Simulation(portpolio=sim_portpolio, env=sim_env).Run()
         sim_result.sim_name = tactic
-        print(sim_result.get_cagr())
+        print('CAGR: %.2f%%'%(sim_result.get_cagr()))
         return sim_result #SimResult
 
 

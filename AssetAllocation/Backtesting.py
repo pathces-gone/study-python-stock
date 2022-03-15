@@ -132,8 +132,8 @@ if __name__ == '__main__':
     #start_date= "2009-02-02"
     #end_date  = "2015-02-02"
     
-    start_date= "2015-02-02"
-    end_date  = "2022-02-24"
+    start_date= "2018-01-07"
+    end_date  = "2022-03-10"
     
     #start_date= "2005-02-02"
     #end_date  = "2022-02-02"
@@ -148,7 +148,8 @@ if __name__ == '__main__':
         #['Static', 'GTAA', {'GTAA-NON':'GTAA-NON'}],
         #['Static', 'DANTE', {'DANTE':'DANTE'}],
         #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ'},'Conservative':{'SHY':'SHY'}}],
-        ['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ','DIA':'DIA'},'Conservative':{'IEF':'IEF','SHY':'SHY'}}],
+        #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ','DIA':'DIA'},'Conservative':{'IEF':'IEF','SHY':'SHY'}}],
+        #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','DBC':'DBC','QQQ':'QQQ','VNQ':'VNQ'},'Conservative':{'IEF':'IEF','SHY':'SHY'}}],
         #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA'},'Conservative':{'AGG':'AGG'}}],
         #['Dynamic','VAA_aggressive',{'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}],
         #['Static', 'SPY', {'DynamicAA/SPY':'DynamicAA/SPY'}],
@@ -160,6 +161,7 @@ if __name__ == '__main__':
         #['Static', 'DynamicAA/IEF', {'DynamicAA/IEF':'DynamicAA/IEF'}],
         #['Static', 'DynamicAA/GLD', {'DynamicAA/GLD':'DynamicAA/GLD'}],
         #['Static', 'DynamicAA/SPY', {'DynamicAA/SPY':'DynamicAA/SPY'}],
+        ['Static', 'DynamicAA/SPHY', {'DynamicAA/SPHY':'DynamicAA/SPHY'}],
         #['Static', 'Fred/DGS10', {'Fred/DGS10':'Fred/DGS10'}],
         #['Static', 'Canary', {'Canary':'Canary'}],
     ]
@@ -199,9 +201,10 @@ if __name__ == '__main__':
               FRED
     =====================================
     """
-    fred_df = ETFUtils.utils_get_price(code='DGS10', source='FRED')
-    fred_df = fred_df.loc[(fred_df['Date']>=start_date) & (fred_df['Date']<=end_date),:]
-    fred_plot = Backtest.get_altair_chart(fred_df,'DGS10',key='Close')
+    if 0:
+      fred_df = ETFUtils.utils_get_price(code='DGS10', source='FRED')
+      fred_df = fred_df.loc[(fred_df['Date']>=start_date) & (fred_df['Date']<=end_date),:]
+      fred_plot = Backtest.get_altair_chart(fred_df,'DGS10',key='Close')
 
     """
     =====================================
@@ -215,11 +218,11 @@ if __name__ == '__main__':
         lines = alt.layer(capline,fred_plot).resolve_scale(
             y = 'independent'
         ).properties(
-            width=16*60,
-            height=10*60
-        ).show()
+            width=16*30,
+            height=10*30
+        ) #.show()
     else:
         capline.properties(
-            width=16*60,
-            height=10*60
-        ).show()
+            width=16*30,
+            height=10*30
+        ) #.show()

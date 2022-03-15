@@ -1,0 +1,6 @@
+DynamicAA/SPHY:
+  SPHY:
+    - etf: 'SPHY'
+      comment: 'S&P500 고배당주'
+      source: 'YAHOO'
+      ratio: 100

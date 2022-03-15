@@ -1,0 +1,6 @@
+DynamicAA/VNQ:
+  VNQ:
+    - etf: 'VNQ'
+      comment: '리츠'
+      source: 'YAHOO'
+      ratio: 100

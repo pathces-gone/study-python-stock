@@ -1,4 +1,5 @@
 from audioop import avg
+from functools import total_ordering
 from matplotlib.pyplot import draw, figure
 from dateutil import relativedelta
 import yaml
@@ -75,7 +76,10 @@ class SimResult(object):
     d1 = start_date
     d2 = end_date
     window = 30
-    df_window = df.loc[(df['Date']>=d1.strftime('%Y-%m-%d')) & (df['Date']<=d2.strftime('%Y-%m-%d')) , 'Capital']
+
+    #print(type(df['Date'].iloc[0]), type(d1.strftime('%Y-%m-%d'))) 
+    #df_window = df.loc[(df['Date']>=d1.strftime('%Y-%m-%d')) & (df['Date']<=d2.strftime('%Y-%m-%d')) , 'Capital']
+    df_window = df.loc[(df['Date']>=d1) & (df['Date']<=d2) , 'Capital']
     max_price = df_window.rolling(window=window, min_periods=1).max()
     min_price = df_window.rolling(window=window, min_periods=1).min()
 
@@ -246,10 +250,10 @@ class Simulation(SimEnvironment):
 
     """
     etfs,_ = self.portpolio.get_etf()
-    print('='*160)
+    print('='*165)
     print('Portpoilo Info - %s'%self.portpolio.name)
-    print("%20s | %30s %20s | %10s %10s %10s %10s %10s %10s %12s"%('index','name','code', 'max(%)','ratio(%)', 'price(krw)', 'qty', 'buy', 'earn','earn_yield'))
-    print('-'*160)
+    print("%20s | %30s %20s | %10s %10s %10s %10s %10s %15s %15s"%('index','name','code', 'max(%)','ratio(%)', 'price(krw)', 'qty', 'buy', 'quater-earn','quater-yield'))
+    print('-'*165)
     total_buy = 0
     for i,etf in enumerate(etfs):
       qty   = self.hold_qtys[etf.code]
@@ -261,12 +265,12 @@ class Simulation(SimEnvironment):
       total_buy += value
       earn_yield = round(earn/(self.capital*max_ratio)*100*100,2)
 
-      print("%20s | %s %20s | %10.2f %10.2f %10.2f %10d %10d %10d %12.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,max_ratio,ratios, price, qty, value,earn,earn_yield) )
-    print('-'*160)
+      print("%20s | %s %20s | %10.2f %10.2f %10.2f %10d %10d %15d %15.2f"%(etf.index, ETFUtils.preformat_cjk(etf.name,30),etf.code,max_ratio,ratios, price, qty, value,earn,earn_yield) )
+    print('-'*165)
     print('Total:')
     print('\tbudget: %10d\n\t\tbuy: %10d\n\t\tcash: %10d'%(self.budgets,total_buy,self.cash))
     print('\tcurr/budget=%12d/%12d [%4.2f%%]'%(total_buy+self.cash, self.budgets,(total_buy+self.cash)/self.budgets*100))
-    print('='*160)
+    print('='*165)
 
 
   def buy_portpolio(self, date:datetime):
@@ -478,9 +482,10 @@ class Simulation(SimEnvironment):
         Cut off
       """ 
       if self.env.DO_CUT_OFF:
-        loss_cut = (today_capital - trade_log['SMG55'].iloc[-1])/today_capital * 100#(today_capital/last_capital -1)*100
+        #loss_cut = (today_capital - trade_log['SMG55'].iloc[-1])/today_capital * 100 #(today_capital/last_capital -1)*100
+        loss_cut = (today_capital/last_capital -1)*100
         if ( loss_cut < -10) & (cutoff_flag==False):
-          print(pivot_date,'Cut-off!!   loss_cut: %2.2f%%'%loss_cut)
+          print(pivot_date,'Cut-off!!   loss_cut: %2.2f%%  %.2f %.2f'%(loss_cut, today_capital,last_capital))
           total_sell,valid = self.sell_portpolio(date=pivot_date)
           self.capital = total_sell
           cutoff_flag = True
@@ -502,11 +507,14 @@ class Simulation(SimEnvironment):
     """
       Sell All at the end date
     """
+    self.budgets += count*additional_paid_in  
     last_capital = self.capital
     total_sell,valid = self.sell_portpolio(date=dt_end_date)
-    earn_yield = round((total_sell-last_capital)/last_capital*100,2)
-    self.budgets += count*additional_paid_in
+    #self.earn = (total_sell - )
+    earn_yield = round((total_sell-self.budgets)/self.budgets*100,2)
+
     if self.env.PRINT_TRADE_LOG:
+      loss_cut = (total_sell/self.budgets -1 )*100
       print(pivot_date,'%10d --> %10d  %4.2f[%%]  MDD: %.2f[%%] Loss:%.2f[%%]'%(last_capital,total_sell, earn_yield,max_draw_down,loss_cut))
       self.print_info()
 
