@@ -7,10 +7,10 @@ LAA:
   'Longbonds':
     - etf: 'IEF'
       source: 'YAHOO'
-      comment: '미국 장기채'
+      comment: 'Bonds'
       ratio: 25
   'GLD':
     - etf: 'GLD'
       source: 'YAHOO'
-      comment: '금'
+      comment: 'Gold'
       ratio: 25

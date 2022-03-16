@@ -89,53 +89,6 @@ class Portpolio(object):
   
     return [items, ratios]
 
-  def get_correlation(self, start_date, end_date):
-    """ Return
-      Correation Dataframe
-    """
-    if platform.system() == 'Darwin':
-      plt.rc('font', family='AppleGothic')
-      plt.rcParams['axes.unicode_minus'] = False
-    else:
-      plt.rcParams["font.family"] = 'NanumGothic'
-
-    if self.items == None:
-      portpolio,_ = self.get_etf()
-
-    raw_df = pd.DataFrame(portpolio[0].price_df[['Date']].iloc[::-1].reset_index(drop=True))
-    for etf in portpolio:
-      raw_df[etf.name] = etf.price_df.iloc[::-1].reset_index(drop=True)['Close']
-    
-    ranging_df = raw_df[(start_date<=raw_df['Date']) & (raw_df['Date']<=end_date)].iloc[::-1].reset_index(drop=True)
-    #print(ranging_df)
-    corr_df = ranging_df.corr(method='pearson')
-    return corr_df
-
-  def get_corr_plot(self, corr_df=None):
-    """ Return
-      plot()
-    """
-    assert corr_df.empty ==0 ,'please do get_correlation() first'
-
-    fig, ax = plt.subplots( figsize=(7,7) )
-
-
-    if 0 :    # 삼각형 마스크를 만든다(위 쪽 삼각형에 True, 아래 삼각형에 False)
-      mask = np.zeros_like(corr_df, dtype=np.bool)
-      mask[np.triu_indices_from(mask)] = True
-    else:
-      mask = 0
-
-    sns.heatmap(corr_df, 
-                cmap = 'RdYlBu_r', 
-                annot = True,
-                mask=mask,
-                linewidths=.5,
-                cbar_kws={"shrink": .5},
-                vmin = -1,vmax = 1
-              )  
-    plt.show()
-
   def get_usd_krw(self,start_date:str,end_date:str,interval:int=90):
     """ Return 
       usd-krw graph
@@ -151,16 +104,6 @@ class Portpolio(object):
   LOCAL
 """
 if __name__ == '__main__':
-  if 0:
-    po = Portpolio('CORR2')
-    #start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
-    start_date, end_date, _ = ['2018-12-05', '2022-01-17','']
-    #start_date, end_date, _ = ['2018-02-05', '2019-01-03', 'kospi양적긴축폭락장']
-    corr_df = po.get_correlation(start_date=start_date, end_date=end_date)
-
-    if 1:
-      po.get_corr_plot(corr_df)
-  else:
     po = Portpolio('MyPortpolio2')
     p,s=po.get_etf()
     for i in p:
