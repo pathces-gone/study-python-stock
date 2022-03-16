@@ -151,7 +151,7 @@ class Portpolio(object):
   LOCAL
 """
 if __name__ == '__main__':
-  if 1:
+  if 0:
     po = Portpolio('CORR2')
     #start_date, end_date, _ = ['2010-02-05', '2022-01-11','']
     start_date, end_date, _ = ['2018-12-05', '2022-01-17','']
