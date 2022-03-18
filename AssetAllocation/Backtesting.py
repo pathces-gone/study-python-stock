@@ -132,8 +132,8 @@ if __name__ == '__main__':
     #start_date= "2009-02-02"
     #end_date  = "2015-02-02"
     
-    start_date= "2018-01-07"
-    end_date  = "2022-03-10"
+    start_date= "2010-01-03"
+    end_date  = "2022-03-16"
     
     #start_date= "2005-02-02"
     #end_date  = "2022-02-02"
@@ -150,6 +150,7 @@ if __name__ == '__main__':
         #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ'},'Conservative':{'SHY':'SHY'}}],
         #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA','QQQ':'QQQ','DIA':'DIA'},'Conservative':{'IEF':'IEF','SHY':'SHY'}}],
         #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','DBC':'DBC','QQQ':'QQQ','VNQ':'VNQ'},'Conservative':{'IEF':'IEF','SHY':'SHY'}}],
+        #['Dynamic','DualMomentum',{'Aggressive':{'IYT':'IYT','DBC':'DBC'},'Conservative':{'AGG':'AGG'}}],
         #['Dynamic','DualMomentum',{'Aggressive':{'SPY':'SPY','EFA':'EFA'},'Conservative':{'AGG':'AGG'}}],
         #['Dynamic','VAA_aggressive',{'Aggressive':{'SPY':'SPY','EFA':'EFA','EEM':'EEM','AGG':'AGG'},'Conservative':{'LQD':'LQD','IEF':'IEF','SHY':'SHY'}}],
         #['Static', 'SPY', {'DynamicAA/SPY':'DynamicAA/SPY'}],
@@ -161,7 +162,8 @@ if __name__ == '__main__':
         #['Static', 'DynamicAA/IEF', {'DynamicAA/IEF':'DynamicAA/IEF'}],
         #['Static', 'DynamicAA/GLD', {'DynamicAA/GLD':'DynamicAA/GLD'}],
         #['Static', 'DynamicAA/SPY', {'DynamicAA/SPY':'DynamicAA/SPY'}],
-        ['Static', 'DynamicAA/SPHY', {'DynamicAA/SPHY':'DynamicAA/SPHY'}],
+        #['Static', 'DynamicAA/SPHY', {'DynamicAA/SPHY':'DynamicAA/SPHY'}],
+        ['Static', 'DynamicAA/IYT', {'DynamicAA/IYT':'DynamicAA/IYT'}],
         #['Static', 'Fred/DGS10', {'Fred/DGS10':'Fred/DGS10'}],
         #['Static', 'Canary', {'Canary':'Canary'}],
     ]
@@ -213,7 +215,7 @@ if __name__ == '__main__':
     """
     alt.data_transformers.disable_max_rows()
     capline= np.sum(cap_plots)
-    if 0 :
+    if 0:
         #mddline= np.sum(mdd_plots)
         lines = alt.layer(capline,fred_plot).resolve_scale(
             y = 'independent'
@@ -225,4 +227,4 @@ if __name__ == '__main__':
         capline.properties(
             width=16*30,
             height=10*30
-        ) #.show()
+        ).show()

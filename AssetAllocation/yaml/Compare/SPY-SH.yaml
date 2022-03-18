@@ -7,7 +7,7 @@ SPY-SH:
   SH:
     - etf: 'SH'
       source: 'YAHOO'
-      comment: 'inv'
+      comment: 'SH'
       ratio: 20
     # - etf: '200030'
     #   source: 'NAVER'

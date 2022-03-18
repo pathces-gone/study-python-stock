@@ -1,0 +1,11 @@
+QQQ-SPY:
+  SPY:
+    - etf: 'SPY'
+      source: 'YAHOO'
+      comment: 'SPY'
+      ratio: 50
+  QQQ:
+    - etf: 'QQQ'
+      source: 'YAHOO'
+      comment: 'QQQ'
+      ratio: 50

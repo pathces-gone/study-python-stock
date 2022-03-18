@@ -1,0 +1,11 @@
+SPY-IYT:
+  SPY:
+    - etf: 'SPY'
+      source: 'YAHOO'
+      comment: 'SPY'
+      ratio: 50
+  IYT:
+    - etf: 'IYT'
+      source: 'YAHOO'
+      comment: 'IYT'
+      ratio: 50

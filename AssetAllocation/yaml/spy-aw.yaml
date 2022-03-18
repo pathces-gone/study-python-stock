@@ -7,10 +7,10 @@ spy-aw:
   'Longbonds':
     - etf: 'IEF'
       source: 'YAHOO'
-      comment: '미국 장기채'
+      comment: 'IEF'
       ratio: 25
   'GLD':
     - etf: 'GLD'
       source: 'YAHOO'
-      comment: '금'
+      comment: 'GLD'
       ratio: 25

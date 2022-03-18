@@ -1,0 +1,6 @@
+DynamicAA/IYT:
+  IYT:
+    - etf: 'IYT'
+      comment: 'Dow Jones Transportation Average'
+      source: 'YAHOO'
+      ratio: 100
