@@ -15,7 +15,7 @@ class ETFUtiles(object):
     def get_from_yahoo(ticker:str, page=None):
       ''' Return
         Input : Date,[ Open, High, Low, Close, Adj Close, Volume]
-        Output: [Date,Open, High, Low, Close, Adj Close, Volume, Trade]
+        Output: [Date,Open, High, Low, Close, Volume, Trade]
       '''
       yf.pdr_override()
       df_price = pdr.get_data_yahoo(ticker)
@@ -52,4 +52,5 @@ class ETF(ETFUtiles):
 
 if __name__ == '__main__':
   
-  ETF().get_price_data('SPY',source='YAHOO')
+  df = ETF().get_price_data('SPY',source='YAHOO')
+  print(df)
