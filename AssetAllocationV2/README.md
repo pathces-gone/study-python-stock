@@ -15,3 +15,8 @@
 3개월 = 금융기관간 -> 이거 금리 급속도로 높아지면 시장에 유동성이 부족한거 (금융위기) = 대곰탕
 
 > 5월 fomc부터 새로운 상황으로 변화
+
+
+ticker='^IRX' : 13week
+ticker='^TNX' : 10year
+ticker='^TYX' : 30year
