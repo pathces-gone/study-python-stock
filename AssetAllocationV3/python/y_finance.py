@@ -28,7 +28,6 @@ def get_spy():
         trading_df[k] = series
     
     ret= trading_df.to_dict()
-    print(ret['S&P500'])
     return ret['S&P500']
 
 if __name__ == '__main__':

@@ -11,7 +11,13 @@ endif()
 
 
 set(SOURCES
-    src/main.cpp
+    src/LibFrontend/Frontend.cpp
+    src/LibDynamicAA/DynamicAA.cpp
+)
+
+set(SOURCES
+    ${SOURCES}
+    src/App/AppTop.cpp
 )
 
 
@@ -22,7 +28,8 @@ add_executable(assetv3 ${SOURCES})
 
 target_link_libraries(assetv3 ${PYTHON_LIBRARIES})
 target_include_directories(assetv3 PRIVATE 
-        ${PROJECT_SOURCE_DIR}/include/LibCommon
+        ${PROJECT_SOURCE_DIR}/src/LibCommon
+        ${PROJECT_SOURCE_DIR}/src/LibFrontend
 )
 
 target_compile_definitions(assetv3 PRIVATE 
