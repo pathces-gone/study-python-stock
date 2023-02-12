@@ -7,4 +7,14 @@ using namespace std;
 namespace backend
 {
 
+DynamicAA::~DynamicAA()
+{
+
+}
+
+Void DynamicAA::Run()
+{
+
+}
+
 }

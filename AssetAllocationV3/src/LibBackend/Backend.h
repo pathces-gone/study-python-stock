@@ -2,23 +2,25 @@
 #define __BACKEND_H__
 
 #include "../LibCommon/mytypes.h"
-#include <vector>
+#include "../LibCommon/DateUtils.h"
+
+using namespace utils;
 
 namespace backend
 {
 
-class Backend
+class Backend : public DateUtils
 {
 public:
-    Backend();
+    Backend(){assert(0);};
+    Backend(Date start, Date end) : DateUtils(start, end){};
     ~Backend();
 private:
     Sheet m_sheet;
 public:
-    Void append(Ticker, DataFrame);
+    void append(Ticker, DataFrame);
+
 };
-
-
 
 
 

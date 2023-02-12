@@ -4,10 +4,6 @@
 using namespace backend;
 using namespace std;
 
-Backend::Backend()
-{
-}
-
 Backend::~Backend()
 {
     for(auto it=m_sheet.begin(); it!=m_sheet.end(); it++)
