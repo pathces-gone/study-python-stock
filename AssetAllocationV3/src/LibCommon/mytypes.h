@@ -9,4 +9,11 @@ typedef float Float;
 typedef unsigned int UInt;
 typedef void Void;
 
+#include <map>
+#include <string>
+typedef std::string Date;
+typedef Float Price;
+typedef std::map<Date,Price> DataFrame;
+typedef std::string Ticker;
+typedef std::map<Ticker, DataFrame> Sheet;
 #endif

@@ -1,6 +1,8 @@
 #include <iostream>
 #include "../LibFrontend/Frontend.h"
 
+using namespace std;
+
 namespace frontend
 {
 Frontend::Frontend (const char *module_name, const char *root_path){

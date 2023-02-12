@@ -12,7 +12,8 @@ endif()
 
 set(SOURCES
     src/LibFrontend/Frontend.cpp
-    src/LibDynamicAA/DynamicAA.cpp
+    src/LibBackend/DynamicAA.cpp
+    src/LibBackend/Backend.cpp
 )
 
 set(SOURCES
