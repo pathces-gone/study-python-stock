@@ -11,17 +11,19 @@ namespace backend
 
 class Backend : public DateUtils
 {
+/**
+ *  @brief For management of m_refSheet which consists of {Ticker : {Date, Price}}.
+*/
 public:
     Backend(){assert(0);};
     Backend(Date start, Date end) : DateUtils(start, end){};
     ~Backend();
 private:
-    Sheet m_sheet;
-public:
-    void append(Ticker, Dataframe);
-
+    Sheet  m_refSheet;
+protected:
+    Void   appendTickerToRefSheet(Ticker, Dataframe);
+    Sheet& getRefSheet(); 
 };
-
 
 
 } // namespace backend

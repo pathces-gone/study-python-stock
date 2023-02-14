@@ -6,18 +6,18 @@ using namespace std;
 
 Backend::~Backend()
 {
-    for(auto it=m_sheet.begin(); it!=m_sheet.end(); it++)
+    for(auto it=m_refSheet.begin(); it!=m_refSheet.end(); it++)
     {
         if(it->second.size()) it->second.clear();
     }
-    m_sheet.clear();
+    m_refSheet.clear();
 }
 
-Void Backend::append(Ticker ticker, Dataframe df)
+Void Backend::appendTickerToRefSheet(Ticker ticker, Dataframe df)
 {
-    if(m_sheet.find(ticker) == m_sheet.end())
+    if(m_refSheet.find(ticker) == m_refSheet.end())
     {
-        m_sheet[ticker] = df;
+        m_refSheet[ticker] = df;
 
     #if 0
         printf("[%s] %s : %4.2f\n",ticker.c_str(), 
@@ -26,4 +26,9 @@ Void Backend::append(Ticker ticker, Dataframe df)
         );
     #endif
     }
+}
+
+Sheet& Backend::getRefSheet()
+{
+    return m_refSheet;
 }
