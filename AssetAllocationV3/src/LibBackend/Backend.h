@@ -18,7 +18,7 @@ public:
 private:
     Sheet m_sheet;
 public:
-    void append(Ticker, DataFrame);
+    void append(Ticker, Dataframe);
 
 };
 

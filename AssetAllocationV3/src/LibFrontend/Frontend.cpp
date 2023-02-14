@@ -31,7 +31,7 @@ void Frontend::finalize(PyObject *pModule)
 
 
 typedef PyObject PyList;
-void Frontend::loadDataFrame(const char* pFuncName)
+void Frontend::loadDataframe(const char* pFuncName)
 {
     PyObject *pFunc, *pValue;
     pFunc  = PyObject_GetAttrString(pModule, pFuncName);
@@ -48,7 +48,7 @@ void Frontend::loadDataFrame(const char* pFuncName)
     {
         Date date  = PyUnicode_AsUTF8(PyList_GetItem(pDictKeys,i));
         Price price= PyFloat_AsDouble(PyList_GetItem(pDictValues,i));
-        m_tradeDataFrame[date] = price;
+        m_tradeDataframe[date] = price;
     }
 
     Py_DECREF(pDictKeys);

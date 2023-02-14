@@ -13,7 +13,7 @@ Backend::~Backend()
     m_sheet.clear();
 }
 
-Void Backend::append(Ticker ticker, DataFrame df)
+Void Backend::append(Ticker ticker, Dataframe df)
 {
     if(m_sheet.find(ticker) == m_sheet.end())
     {
