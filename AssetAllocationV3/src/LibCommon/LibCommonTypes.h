@@ -13,10 +13,11 @@ typedef bool Bool;
 #include <map>
 #include <string>
 #include <vector>
-typedef std::string Date;
 typedef Float Price;
-typedef std::map<Date,Price> Dataframe;
+typedef std::string Date;
 typedef std::string Ticker;
+typedef std::vector<Date>   DateVec;
+typedef std::vector<Ticker> TickerList;
+typedef std::map<Date,Price> Dataframe;
 typedef std::map<Ticker, Dataframe> Sheet;
-typedef std::vector<Date> DateVec;
 #endif

@@ -6,7 +6,7 @@
 #include <string>
 #include <stdexcept>
 #include <memory>
-#include "../LibCommon/mytypes.h"
+#include "../LibCommon/LibCommonTypes.h"
 
 namespace utils
 {

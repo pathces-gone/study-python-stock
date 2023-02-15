@@ -3,7 +3,7 @@
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
-#include "../LibCommon/mytypes.h"
+#include "../LibCommon/LibCommonTypes.h"
 
 namespace frontend
 {

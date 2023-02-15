@@ -1,7 +1,7 @@
 #ifndef __BACKEND_H__
 #define __BACKEND_H__
 
-#include "../LibCommon/mytypes.h"
+#include "../LibCommon/LibCommonTypes.h"
 #include "../LibCommon/DateUtils.h"
 
 using namespace utils;
@@ -18,11 +18,10 @@ public:
     Backend(){assert(0);};
     Backend(Date start, Date end) : DateUtils(start, end){};
     ~Backend();
-private:
-    Sheet  m_refSheet;
 protected:
+    Sheet  m_refSheet;
+public:
     Void   appendTickerToRefSheet(Ticker, Dataframe);
-    Sheet& getRefSheet(); 
 };
 
 
