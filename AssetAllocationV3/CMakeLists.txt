@@ -11,10 +11,11 @@ endif()
 
 
 set(SOURCES
+    src/LibCommon/DateUtils.cpp
     src/LibFrontend/Frontend.cpp
     src/LibBackend/DynamicAA.cpp
     src/LibBackend/Backend.cpp
-    src/LibCommon/DateUtils.cpp
+    src/LibBackend/Portfolio.cpp
 )
 
 set(SOURCES

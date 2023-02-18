@@ -9,33 +9,32 @@ using namespace frontend;
 using namespace backend;
 using namespace std;
 
+/***
+ * Arg0 : root_path
+ * Arg1 : module_name
+*/
 Int main(int argc, char *argv[])
 {
-   // Init Env.
    //Frontend pyEnv(argv[1],argv[0]);
-   Date start = "2022-06-01";
-   Date end   = "2022-08-01";
+   Date sdate = "2022-06-01";
+   Date edate = "2022-08-01";
 
-   // Set Tickers
+
    //Frontend pyTicker(argv[2],argv[0]);
    TickerList tickers;
    tickers.push_back("SPY");
+   tickers.push_back("QQQ");
 
-   // Init portfolio
-   Frontend yfinance (argv[1],argv[0]);
-   DynamicAA  dynamic  (tickers, start, end);
+   Frontend  yfinance (argv[1],argv[0]);
+   DynamicAA dynamic  (tickers, sdate, edate);
    for (Ticker tick : tickers)
    {
-   #if 1
-      yfinance.loadDataframe("get_spy");
-   #else
-      yfinance.loadDataframe(tick);
-   #endif
+      yfinance.loadDataframe("getFromYF", tick, sdate, edate);
       dynamic.appendTickerToRefSheet(tick, yfinance.getDataframe());
    }
 
-   // Run DynamicAA
    dynamic.Run();
+
 
    return 0;
 }

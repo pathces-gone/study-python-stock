@@ -5,12 +5,12 @@ using namespace std;
 
 namespace frontend
 {
-Frontend::Frontend (const char *module_name, const char *root_path){
+Frontend::Frontend (PYModule module_name, const char *root_path){
     string pypath = ".."; //TODO
     this->initialize(pypath.c_str(), module_name, &pModule);
 }
 
-void Frontend::initialize(const char* pypath ,const char* module_name, PyObject **pModule)
+void Frontend::initialize(const char* pypath ,PYModule module_name, PyObject **pModule)
 {
     string command = string("sys.path.append(\"")+string(pypath)+string("\")"); 
     Py_Initialize();
@@ -29,13 +29,22 @@ void Frontend::finalize(PyObject *pModule)
 }
 
 
-
 typedef PyObject PyList;
-void Frontend::loadDataframe(const char* pFuncName)
+void Frontend::loadDataframe(PYMethod pFuncName, Ticker ticker, Date sdate, Date edate)
 {
-    PyObject *pFunc, *pValue;
+    /**
+     * Input:  python method
+     * Output: Dataframe
+    */
+    PyObject *pFunc, *pArgs ,*pValue;
     pFunc  = PyObject_GetAttrString(pModule, pFuncName);
-    pValue = PyObject_CallObject(pFunc, NULL);
+
+    pArgs = PyTuple_New(3);
+    PyTuple_SetItem(pArgs, 0, PyUnicode_FromString(ticker.c_str()));
+    PyTuple_SetItem(pArgs, 1, PyUnicode_FromString(sdate.c_str()));
+    PyTuple_SetItem(pArgs, 2, PyUnicode_FromString(edate.c_str()));
+
+    pValue = PyObject_CallObject(pFunc, pArgs);
 
     PyList *pDictKeys   = PyDict_Keys(pValue);
     PyList *pDictValues = PyDict_Values(pValue);

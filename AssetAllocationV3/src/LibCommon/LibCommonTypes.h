@@ -18,6 +18,9 @@ typedef std::string Date;
 typedef std::string Ticker;
 typedef std::vector<Date>   DateVec;
 typedef std::vector<Ticker> TickerList;
+typedef std::map<Ticker, Price>  RatioMap;
 typedef std::map<Date,Price> Dataframe;
 typedef std::map<Ticker, Dataframe> Sheet;
+typedef const char* PYMethod;
+typedef const char* PYModule;
 #endif

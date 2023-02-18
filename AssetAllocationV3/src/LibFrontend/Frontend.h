@@ -11,19 +11,19 @@ namespace frontend
 class Frontend
 {
 public:
-    Frontend (const char *module_name, const char *root_path);
+    Frontend (PYModule module_name, const char *root_path);
     ~Frontend(){
         if(pModule) this->finalize(pModule);
         m_tradeDataframe.clear();
     }
 private:
     PyObject *pModule;
-    Void initialize(const char* pypath, const char* module_name, PyObject **pModule);
+    Void initialize(const char* pypath, PYModule module_name, PyObject **pModule);
     Void finalize(PyObject *pModule);
 
     Dataframe m_tradeDataframe;
 public:
-    Void loadDataframe(const char* pFuncName);
+    Void loadDataframe(PYMethod, Ticker, Date, Date);
     Dataframe getDataframe() {return m_tradeDataframe;};
 };
 

@@ -17,8 +17,9 @@ public:
 protected:
     Sheet m_tradingSheet;
 
+    Void initTradingSheet(Price, RatioMap);
+    Void printStatus(Date);
 public:
-
 };
 
 } // namespace backend
