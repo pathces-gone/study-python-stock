@@ -24,7 +24,7 @@ private:
     Date m_curr;
     Bool m_isFront;
     Bool m_isBack;
-protected:
+public:
     Void next(Int);
     Void prev(Int);
     Void initDate(Date start, Date end){
@@ -39,6 +39,9 @@ protected:
         if(m_start>=curr){m_curr=m_start; m_isFront = true; m_isBack = false;}
         if(m_end<=curr)  {m_curr=m_end;   m_isFront = false; m_isBack = true;}
     };
+    Bool getIsFront()const {return m_isFront;};
+    Bool getIsBack() const {return m_isBack;};
+    Date getCurr()   const {return m_curr;};
     DateVec fillEmptys(DateVec);
     DateVec getTradings();
     DateVec getRemains();

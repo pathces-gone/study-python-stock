@@ -19,6 +19,7 @@ protected:
 
     Void initTradingSheet(Price, RatioMap);
     Void printStatus(Date);
+    Void printSheet(Int);
 public:
 };
 

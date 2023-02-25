@@ -15,9 +15,11 @@ public:
     {
         m_tickerList = tickerList;
         m_initAsset  = 100000;
+        m_cash       = m_initAsset;
     };
     ~DynamicAA();
 private:
+    Price      m_cash;
     Price      m_initAsset;
     TickerList m_tickerList;
     RatioMap   m_ratio;

@@ -21,7 +21,8 @@ public:
 protected:
     Sheet  m_refSheet;
 public:
-    Void   appendTickerToRefSheet(Ticker, Dataframe);
+    Void        appendTickerToRefSheet(Ticker, Dataframe);
+    Dataframe   fillEmptyDays(Dataframe&);
 };
 
 
